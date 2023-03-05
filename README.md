@@ -1,3 +1,3 @@
-# Secret MetaMask Demo
+# Super User
 
-https://secret-metamask-demo.pages.dev
+Do stuff like a pro.
