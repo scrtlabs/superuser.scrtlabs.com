@@ -1,18 +1,7 @@
-import useUrlState from "@ahooksjs/use-url-state";
-import DeleteIcon from "@mui/icons-material/Delete";
-import {
-  Autocomplete,
-  CircularProgress,
-  IconButton,
-  TextField,
-  Typography,
-} from "@mui/material";
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   coinFromString,
   coinsFromString,
-  Msg,
   MsgBeginRedelegate,
   MsgBeginRedelegateParams,
   MsgCreateValidator,
@@ -26,32 +15,27 @@ import {
   MsgEditValidator,
   MsgEditValidatorParams,
   MsgExec,
-  MsgExecParams,
   MsgExecuteContract,
   MsgExecuteContractParams,
   MsgFundCommunityPool,
   MsgFundCommunityPoolParams,
   MsgGrant,
   MsgGrantAllowance,
-  MsgGrantAllowanceParams,
   MsgInstantiateContract,
   MsgInstantiateContractParams,
   MsgMultiSend,
   MsgMultiSendParams,
   MsgRevoke,
-  MsgRevokeParams,
   MsgRevokeAllowance,
-  MsgRevokeAllowanceParams,
   MsgSend,
   MsgSendParams,
+  MsgSetAutoRestake,
+  MsgSetAutoRestakeParams,
   MsgSetWithdrawAddress,
   MsgSetWithdrawAddressParams,
   MsgStoreCode,
-  MsgStoreCodeParams,
   MsgSubmitProposal,
-  MsgSubmitProposalParams,
   MsgTransfer,
-  MsgTransferParams,
   MsgUndelegate,
   MsgUndelegateParams,
   MsgUnjail,
@@ -67,8 +51,6 @@ import {
   SecretNetworkClient,
   selfDelegatorAddressToValidatorAddress,
   toBase64,
-  MsgSetAutoRestake,
-  MsgSetAutoRestakeParams,
   VoteOption,
 } from "secretjs";
 
@@ -104,25 +86,28 @@ type SupportedMessage =
 export const messages: {
   [name: string]: {
     module: string;
-    example: (secretjs: SecretNetworkClient, old: any) => object;
+    example: (secretjs: SecretNetworkClient, old: any) => any;
     converter: (input: any) => SupportedMessage;
     relevantInfo?: (secretjs: SecretNetworkClient) => Promise<any>;
   };
 } = {
   MsgSend: {
     module: "bank",
-    example: (secretjs: SecretNetworkClient, old: any): MsgSendParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgSendParams
+    ): MsgSendParams => {
       if (old) {
         old.from_address = secretjs.address;
         return old;
+      } else {
+        return {
+          from_address: secretjs.address,
+          to_address: "secret1example",
+          //@ts-ignore
+          amount: "1uscrt",
+        };
       }
-
-      return {
-        from_address: secretjs.address,
-        to_address: "secret1example",
-        //@ts-ignore
-        amount: "1uscrt",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
@@ -132,18 +117,21 @@ export const messages: {
   },
   MsgDelegate: {
     module: "staking",
-    example: (secretjs: SecretNetworkClient, old: any): MsgDelegateParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgDelegateParams
+    ): MsgDelegateParams => {
       if (old) {
         old.delegator_address = secretjs.address;
         return old;
+      } else {
+        return {
+          delegator_address: secretjs.address,
+          validator_address: "secretvaloper1example",
+          //@ts-ignore
+          amount: "1uscrt",
+        };
       }
-
-      return {
-        delegator_address: secretjs.address,
-        validator_address: "secretvaloper1example",
-        //@ts-ignore
-        amount: "1uscrt",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinFromString(input.amount);
@@ -155,18 +143,18 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgSetAutoRestakeParams
     ): MsgSetAutoRestakeParams => {
       if (old) {
         old.delegator_address = secretjs.address;
         return old;
+      } else {
+        return {
+          delegator_address: secretjs.address,
+          validator_address: "secretvaloper1example",
+          enabled: true,
+        };
       }
-
-      return {
-        delegator_address: secretjs.address,
-        validator_address: "secretvaloper1example",
-        enabled: true,
-      };
     },
     converter: (input: any): SupportedMessage => {
       return new MsgSetAutoRestake(input);
@@ -177,20 +165,20 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgBeginRedelegateParams
     ): MsgBeginRedelegateParams => {
       if (old) {
         old.delegator_address = secretjs.address;
         return old;
+      } else {
+        return {
+          delegator_address: secretjs.address,
+          validator_src_address: "secretvaloper1example",
+          validator_dst_address: "secretvaloper1example",
+          //@ts-ignore
+          amount: "1uscrt",
+        };
       }
-
-      return {
-        delegator_address: secretjs.address,
-        validator_src_address: "secretvaloper1example",
-        validator_dst_address: "secretvaloper1example",
-        //@ts-ignore
-        amount: "1uscrt",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinFromString(input.amount);
@@ -202,32 +190,32 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgCreateValidatorParams
     ): MsgCreateValidatorParams => {
       if (old) {
         old.delegator_address = secretjs.address;
         return old;
+      } else {
+        return {
+          delegator_address: secretjs.address,
+          commission: {
+            max_change_rate: 0.01, // can change +-1% every 24h
+            max_rate: 0.1, // 10%
+            rate: 0.05, // 5%
+          },
+          description: {
+            moniker: "My validator's display name",
+            identity: "ID on keybase.io, to have a logo on explorer and stuff",
+            website: "example.com",
+            security_contact: "security@example.com",
+            details: "We are good",
+          },
+          pubkey: toBase64(new Uint8Array(32).fill(1)), // validator tendermit pubkey
+          min_self_delegation: "1", // uscrt
+          //@ts-ignore
+          initial_delegation: "1uscrt",
+        };
       }
-
-      return {
-        delegator_address: secretjs.address,
-        commission: {
-          max_change_rate: 0.01, // can change +-1% every 24h
-          max_rate: 0.1, // 10%
-          rate: 0.05, // 5%
-        },
-        description: {
-          moniker: "My validator's display name",
-          identity: "ID on keybase.io, to have a logo on explorer and stuff",
-          website: "example.com",
-          security_contact: "security@example.com",
-          details: "We are good",
-        },
-        pubkey: toBase64(new Uint8Array(32).fill(1)), // validator tendermit pubkey
-        min_self_delegation: "1", // uscrt
-        //@ts-ignore
-        initial_delegation: "1uscrt",
-      };
     },
     converter: (input: any) => {
       input.initial_delegation = coinFromString(input.amount);
@@ -238,21 +226,21 @@ export const messages: {
     module: "vesting",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgCreateVestingAccountParams
     ): MsgCreateVestingAccountParams => {
       if (old) {
         old.from_address = secretjs.address;
         return old;
+      } else {
+        return {
+          from_address: secretjs.address,
+          to_address: "secret1example",
+          //@ts-ignore
+          amount: "1uscrt",
+          end_time: "2020-09-15T14:00:00Z",
+          delayed: false,
+        };
       }
-
-      return {
-        from_address: secretjs.address,
-        to_address: "secret1example",
-        //@ts-ignore
-        amount: "1uscrt",
-        end_time: "2020-09-15T14:00:00Z",
-        delayed: false,
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
@@ -261,18 +249,21 @@ export const messages: {
   },
   MsgDeposit: {
     module: "gov",
-    example: (secretjs: SecretNetworkClient, old: any): MsgDepositParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgDepositParams
+    ): MsgDepositParams => {
       if (old) {
         old.depositor = secretjs.address;
         return old;
+      } else {
+        return {
+          depositor: secretjs.address,
+          proposal_id: "1",
+          //@ts-ignore
+          amount: "1uscrt",
+        };
       }
-
-      return {
-        depositor: secretjs.address,
-        proposal_id: "1",
-        //@ts-ignore
-        amount: "1uscrt",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
@@ -283,30 +274,30 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgEditValidatorParams
     ): MsgEditValidatorParams => {
       if (old) {
         old.validator_address = selfDelegatorAddressToValidatorAddress(
           secretjs.address
         );
         return old;
+      } else {
+        return {
+          validator_address: selfDelegatorAddressToValidatorAddress(
+            secretjs.address
+          ),
+          // optional: if description is provided it updates all values
+          description: {
+            moniker: "My new validator's display name",
+            identity: "ID on keybase.io, to have a logo on explorer and stuff",
+            website: "edited-example.com",
+            security_contact: "security@edited-example.com",
+            details: "We are good probably",
+          },
+          commission_rate: 0.04, // optional: 4% commission cannot be changed more than once in 24h
+          min_self_delegation: "3", // optional: 3uscrt
+        };
       }
-
-      return {
-        validator_address: selfDelegatorAddressToValidatorAddress(
-          secretjs.address
-        ),
-        // optional: if description is provided it updates all values
-        description: {
-          moniker: "My new validator's display name",
-          identity: "ID on keybase.io, to have a logo on explorer and stuff",
-          website: "edited-example.com",
-          security_contact: "security@edited-example.com",
-          details: "We are good probably",
-        },
-        commission_rate: 0.04, // optional: 4% commission cannot be changed more than once in 24h
-        min_self_delegation: "3", // optional: 3uscrt
-      };
     },
     converter: (input: any): SupportedMessage => new MsgEditValidator(input),
   },
@@ -314,25 +305,25 @@ export const messages: {
     module: "compute",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgExecuteContractParams<any>
     ): MsgExecuteContractParams<any> => {
       if (old) {
         old.sender = secretjs.address;
         return old;
-      }
-
-      return {
-        sender: secretjs.address,
-        contract_address: "secret1example",
-        msg: {
-          create_viewing_key: {
-            entropy: "bla bla",
+      } else {
+        return {
+          sender: secretjs.address,
+          contract_address: "secret1example",
+          msg: {
+            create_viewing_key: {
+              entropy: "bla bla",
+            },
           },
-        },
-        code_hash: "abcdefg", // optional
-        //@ts-ignore
-        sent_funds: "1uscrt", // optional
-      };
+          code_hash: "abcdefg", // optional
+          //@ts-ignore
+          sent_funds: "1uscrt", // optional
+        };
+      }
     },
     converter: (input: any): SupportedMessage => {
       input.sent_funds = coinsFromString(input.sent_funds);
@@ -343,81 +334,85 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgFundCommunityPoolParams
     ): MsgFundCommunityPoolParams => {
       if (old) {
         old.depositor = secretjs.address;
         return old;
+      } else {
+        return {
+          depositor: secretjs.address,
+          //@ts-ignore
+          amount: "1uscrt",
+        };
       }
-
-      return {
-        depositor: secretjs.address,
-        //@ts-ignore
-        amount: "1uscrt",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
       return new MsgFundCommunityPool(input);
     },
+    relevantInfo: bankRelevantInfo,
   },
   MsgInstantiateContract: {
     module: "compute",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgInstantiateContractParams
     ): MsgInstantiateContractParams => {
       if (old) {
         old.sender = secretjs.address;
         return old;
-      }
-
-      return {
-        sender: secretjs.address,
-        code_id: 1,
-        init_msg: {
-          gm: {
-            hello: "world",
+      } else {
+        return {
+          sender: secretjs.address,
+          code_id: 1,
+          init_msg: {
+            gm: {
+              hello: "world",
+            },
           },
-        },
-        label: "gm",
-        //@ts-ignore
-        init_funds: "1uscrt", // optional
-        code_hash: "abcdefg", // optional
-      };
+          label: "gm",
+          //@ts-ignore
+          init_funds: "1uscrt", // optional
+          code_hash: "abcdefg", // optional
+        };
+      }
     },
     converter: (input: any): SupportedMessage =>
       new MsgInstantiateContract(input),
   },
   MsgMultiSend: {
     module: "bank",
-    example: (secretjs: SecretNetworkClient, old: any): MsgMultiSendParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgMultiSendParams
+    ): MsgMultiSendParams => {
       if (old) {
         old.inputs[0].address = secretjs.address;
         return old;
+      } else {
+        return {
+          inputs: [
+            {
+              address: secretjs.address,
+              //@ts-ignore
+              coins: "2uscrt",
+            },
+          ],
+          outputs: [
+            {
+              address: "secret1example",
+              //@ts-ignore
+              coins: "1uscrt",
+            },
+            {
+              address: "secret1example",
+              //@ts-ignore
+              coins: "1uscrt",
+            },
+          ],
+        };
       }
-
-      return {
-        inputs: [
-          {
-            address: secretjs.address,
-            //@ts-ignore
-            coins: "2uscrt",
-          },
-        ],
-        outputs: [
-          {
-            address: "secret1example",
-            //@ts-ignore
-            coins: "1uscrt",
-          },
-          {
-            address: "secret1example",
-            //@ts-ignore
-            coins: "1uscrt",
-          },
-        ],
-      };
     },
     converter: (input: any): SupportedMessage => {
       for (let i = 0; i < input.inputs.length; i++) {
@@ -432,77 +427,80 @@ export const messages: {
   },
   // MsgGrant: {
   //   module: "authz",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgGrantParams): MsgGrantParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgRevoke: {
   //   module: "authz",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgRevokeParams): MsgRevokeParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgExec: {
   //   module: "authz",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgExecParams): MsgExecParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgGrantAllowance: {
   //   module: "feegrant",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgGrantAllowanceParams): MsgGrantAllowanceParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgRevokeAllowance: {
   //   module: "feegrant",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgRevokeAllowanceParams): MsgRevokeAllowanceParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   MsgSetWithdrawAddress: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgSetWithdrawAddressParams
     ): MsgSetWithdrawAddressParams => {
       if (old) {
         old.delegator_address = secretjs.address;
         return old;
+      } else {
+        return {
+          delegator_address: secretjs.address,
+          withdraw_address: "secret1example",
+        };
       }
-
-      return {
-        delegator_address: secretjs.address,
-        withdraw_address: "secret1example",
-      };
     },
     converter: (input: any): SupportedMessage =>
       new MsgSetWithdrawAddress(input),
   },
   // MsgStoreCode: {
   //   module: "compute",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgStoreCodeParams): MsgStoreCodeParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgSubmitProposal: {
   //   module: "gov",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgSubmitProposalParams): MsgSubmitProposalParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgTransfer: {
   //   module: "ibc-transfer",
-  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old: MsgTransferParams): MsgTransferParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   MsgUndelegate: {
     module: "staking",
-    example: (secretjs: SecretNetworkClient, old: any): MsgUndelegateParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgUndelegateParams
+    ): MsgUndelegateParams => {
       if (old) {
         old.delegator_address = secretjs.address;
         return old;
+      } else {
+        return {
+          delegator_address: secretjs.address,
+          validator_address: "secretvaloper1example",
+          //@ts-ignore
+          amount: "1uscrt",
+        };
       }
-
-      return {
-        delegator_address: secretjs.address,
-        validator_address: "secretvaloper1example",
-        //@ts-ignore
-        amount: "1uscrt",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.amount = coinFromString(input.amount);
@@ -512,36 +510,42 @@ export const messages: {
   },
   MsgUnjail: {
     module: "slashing",
-    example: (secretjs: SecretNetworkClient, old: any): MsgUnjailParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgUnjailParams
+    ): MsgUnjailParams => {
       if (old) {
         old.validator_addr = selfDelegatorAddressToValidatorAddress(
           secretjs.address
         );
         return old;
+      } else {
+        return {
+          validator_addr: selfDelegatorAddressToValidatorAddress(
+            secretjs.address
+          ),
+        };
       }
-
-      return {
-        validator_addr: selfDelegatorAddressToValidatorAddress(
-          secretjs.address
-        ),
-      };
     },
     converter: (input: any): SupportedMessage => new MsgUnjail(input),
   },
   MsgVote: {
     module: "gov",
-    example: (secretjs: SecretNetworkClient, old: any): MsgVoteParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgVoteParams
+    ): MsgVoteParams => {
       if (old) {
         old.voter = secretjs.address;
         return old;
+      } else {
+        return {
+          voter: secretjs.address,
+          proposal_id: "123",
+          //@ts-ignore
+          option: "YES/NO/ABSTAIN/NO_WITH_VETO",
+        };
       }
-
-      return {
-        voter: secretjs.address,
-        proposal_id: "123",
-        //@ts-ignore
-        option: "YES/NO/ABSTAIN/NO_WITH_VETO",
-      };
     },
     converter: (input: any): SupportedMessage => {
       input.option = (input.option as string).toUpperCase();
@@ -570,29 +574,29 @@ export const messages: {
     module: "gov",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgVoteWeightedParams
     ): MsgVoteWeightedParams => {
       if (old) {
         old.voter = secretjs.address;
         return old;
+      } else {
+        return {
+          voter: secretjs.address,
+          proposal_id: "123",
+          options: [
+            {
+              //@ts-ignore
+              option: "YES/NO/ABSTAIN/NO_WITH_VETO",
+              weight: 0.6,
+            },
+            {
+              //@ts-ignore
+              option: "YES/NO/ABSTAIN/NO_WITH_VETO",
+              weight: 0.4,
+            },
+          ],
+        };
       }
-
-      return {
-        voter: secretjs.address,
-        proposal_id: "123",
-        options: [
-          {
-            //@ts-ignore
-            option: "YES/NO/ABSTAIN/NO_WITH_VETO",
-            weight: 0.6,
-          },
-          {
-            //@ts-ignore
-            option: "YES/NO/ABSTAIN/NO_WITH_VETO",
-            weight: 0.4,
-          },
-        ],
-      };
     },
     converter: (input: any): SupportedMessage => {
       for (let i = 0; i < input.options.length; i++) {
@@ -617,8 +621,6 @@ export const messages: {
         }
       }
 
-      console.log(input);
-
       return new MsgVoteWeighted(input);
     },
     relevantInfo: undefined, // TODO
@@ -627,7 +629,7 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgWithdrawDelegatorRewardParams
     ): MsgWithdrawDelegatorRewardParams => {
       if (old) {
         return Object.assign({}, old, { delegator_address: secretjs.address });
@@ -646,14 +648,13 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: any
+      old: MsgWithdrawValidatorCommissionParams
     ): MsgWithdrawValidatorCommissionParams => {
       if (old) {
-        return Object.assign({}, old, {
-          validator_address: selfDelegatorAddressToValidatorAddress(
-            secretjs.address
-          ),
-        });
+        old.validator_address = selfDelegatorAddressToValidatorAddress(
+          secretjs.address
+        );
+        return old;
       } else {
         return {
           validator_address: selfDelegatorAddressToValidatorAddress(
@@ -666,143 +667,6 @@ export const messages: {
       new MsgWithdrawValidatorCommission(input),
   },
 };
-
-export default function MsgEditor({
-  secretjs,
-  invokeDelete,
-  msgType,
-  msgInput,
-  setMsgType,
-  setMsgInput,
-}: {
-  secretjs: SecretNetworkClient;
-  msgType: string;
-  msgInput: string;
-  setMsgType: (type: string) => void;
-  setMsgInput: (input: string) => void;
-  invokeDelete: () => void;
-}) {
-  const [relevantInfo, setRelevantInfo] = useState<any>(null);
-  const [loadingInfo, setLoadingInfo] = useState<boolean>(false);
-
-  useEffect(() => {
-    (async () => {
-      if (messages[msgType]?.relevantInfo) {
-        setLoadingInfo(true);
-        setRelevantInfo(await messages[msgType].relevantInfo!(secretjs));
-        setLoadingInfo(false);
-      } else {
-        setRelevantInfo(null);
-      }
-    })();
-  }, [msgType]);
-
-  return (
-    <>
-      <div
-        style={{
-          display: "flex",
-          placeContent: "flex-start",
-          placeItems: "center",
-          justifyContent: "space-between",
-          padding: "1rem",
-          gap: "1rem",
-        }}
-      >
-        <Autocomplete
-          disablePortal
-          options={Object.keys(messages).sort((a, b) => {
-            const module = messages[a].module.localeCompare(messages[b].module);
-            if (module !== 0) {
-              return module;
-            } else {
-              return a.localeCompare(b);
-            }
-          })}
-          sx={{ width: "20rem" }}
-          renderInput={(params) => (
-            <TextField {...params} label="Message Type" />
-          )}
-          value={msgType}
-          onChange={(_, newMsgType) => setMsgType(newMsgType || "")}
-        />
-        <IconButton onClick={invokeDelete}>
-          <DeleteIcon />
-        </IconButton>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          placeItems: "center",
-          padding: "1rem",
-          gap: "1rem",
-        }}
-      >
-        <TextField
-          sx={{ width: "100%" }}
-          label="Message Content"
-          multiline
-          minRows={5}
-          maxRows={500}
-          value={msgInput}
-          onChange={(e) => setMsgInput(e.target.value)}
-          error={(() => {
-            if (!messages[msgType]) {
-              return false;
-            }
-
-            try {
-              messages[msgType].converter(JSON.parse(msgInput));
-              return false;
-            } catch (error) {
-              return true;
-            }
-          })()}
-          helperText={(() => {
-            if (!msgType) {
-              return "";
-            }
-            try {
-              messages[msgType].converter(JSON.parse(msgInput));
-            } catch (error) {
-              //@ts-ignore
-              return error.message;
-            }
-          })()}
-        />
-      </div>
-      {loadingInfo && (
-        <div
-          style={{
-            display: "flex",
-            placeItems: "center",
-            padding: "1rem",
-            gap: "1rem",
-          }}
-        >
-          <CircularProgress size="1rem" />
-        </div>
-      )}
-      {relevantInfo && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            padding: "1rem 1rem 1rem 1.2rem",
-            gap: "1rem",
-          }}
-        >
-          <Typography component="div" align="left" sx={{ fontSize: "small" }}>
-            <details>
-              <summary style={{ cursor: "pointer" }}> Relevant info</summary>
-              {relevantInfo}
-            </details>
-          </Typography>
-        </div>
-      )}
-    </>
-  );
-}
 
 const balanceFormat = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,

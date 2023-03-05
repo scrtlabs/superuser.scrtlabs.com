@@ -17,7 +17,8 @@ import { BrowserRouter } from "react-router-dom";
 import { BreakpointProvider } from "react-socks";
 import { SecretNetworkClient } from "secretjs";
 import "./index.css";
-import MsgEditor, { messages } from "./Msg";
+import { messages as Msgs } from "./Msgs";
+import MsgEditor from "./MsgEditor";
 import { WalletPanel } from "./WalletStuff";
 
 ReactDOM.render(
@@ -63,7 +64,7 @@ export default function App() {
     }
 
     Object.keys(state).forEach((msgIndex) => {
-      if (!messages[state[msgIndex][0]]?.example) {
+      if (!Msgs[state[msgIndex][0]]?.example) {
         return;
       }
 
@@ -71,7 +72,7 @@ export default function App() {
         [msgIndex]: [
           state[msgIndex][0],
           JSON.stringify(
-            messages[state[msgIndex][0]].example(
+            Msgs[state[msgIndex][0]].example(
               secretjs,
               JSON.parse(state[msgIndex][1])
             ),
@@ -147,7 +148,7 @@ export default function App() {
                             input !== ""
                               ? input
                               : JSON.stringify(
-                                  messages[state[msgIndex][0]]?.example(
+                                  Msgs[state[msgIndex][0]]?.example(
                                     secretjs,
                                     null
                                   ),
@@ -163,7 +164,7 @@ export default function App() {
                             type,
                             type !== state[msgIndex][0]
                               ? JSON.stringify(
-                                  messages[type]?.example(secretjs, null),
+                                  Msgs[type]?.example(secretjs, null),
                                   null,
                                   2
                                 ) || ""
@@ -221,7 +222,7 @@ export default function App() {
                   try {
                     const tx = await secretjs.tx.broadcast(
                       Object.values(state).map(([type, input]) => {
-                        return messages[type].converter(JSON.parse(input));
+                        return Msgs[type].converter(JSON.parse(input));
                       }),
                       {
                         gasLimit: 150_000,
