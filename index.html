@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Super User</title>
+
+    <!-- SEO -->
+    <!-- Title -->
+    <meta name="application-name" content="Super User" />
+    <meta name="title" content="Super User" />
+    <meta name="twitter:title" content="Super User" />
+    <meta property="og:title" content="Super User" />
+
+    <!-- Description -->
+    <meta name="description" content="Be a Cosmos super user." />
+    <meta name="twitter:description" content="Be a Cosmos super user." />
+    <meta property="og:description" content="Be a Cosmos super user." />
+
+    <!-- Image -->
+    <meta
+      name="twitter:image"
+      content="https://secret-metamask-demo.pages.dev/socials-preview.png"
+    />
+    <meta
+      property="og:image"
+      content="https://secret-metamask-demo.pages.dev/socials-preview.png"
+    />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@SecretNetwork" />
+    <meta name="twitter:creator" content="@SecretNetwork" />
+
+    <!-- Facebook/Telegram -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Secret MetaMask" />
+    <meta property="og:url" content="https://secret-metamask-demo.pages.dev" />
+    <meta property="og:locale" content="en_US" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // fix the keplr window type error when there are no node polyfills
+      var global = global || window;
+    </script>
+    <script type="module">
+      import { Buffer } from "buffer";
+      window.Buffer = Buffer;
+    </script>
+    <script type="module" src="/src/App.tsx"></script>
+  </body>
+</html>
