@@ -103,14 +103,19 @@ type SupportedMessage =
 export const messages: {
   [name: string]: {
     module: string;
-    example: (secretjs: SecretNetworkClient) => object;
+    example: (secretjs: SecretNetworkClient, old: any) => object;
     converter: (input: any) => SupportedMessage;
     relevantInfo?: (secretjs: SecretNetworkClient) => Promise<any>;
   };
 } = {
   MsgSend: {
     module: "bank",
-    example: (secretjs: SecretNetworkClient): object => {
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.from_address = secretjs.address;
+        return old;
+      }
+
       return {
         from_address: secretjs.address,
         to_address: "secret1example",
@@ -125,7 +130,12 @@ export const messages: {
   },
   MsgDelegate: {
     module: "staking",
-    example: (secretjs: SecretNetworkClient): object => {
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.delegator_address = secretjs.address;
+        return old;
+      }
+
       return {
         delegator_address: secretjs.address,
         validator_address: "secretvaloper1example",
@@ -140,7 +150,15 @@ export const messages: {
   },
   MsgSetAutoRestake: {
     module: "distribution",
-    example: (secretjs: SecretNetworkClient): MsgSetAutoRestakeParams => {
+    example: (
+      secretjs: SecretNetworkClient,
+      old: any
+    ): MsgSetAutoRestakeParams => {
+      if (old) {
+        old.delegator_address = secretjs.address;
+        return old;
+      }
+
       return {
         delegator_address: secretjs.address,
         validator_address: "secretvaloper1example",
@@ -154,12 +172,19 @@ export const messages: {
   },
   MsgBeginRedelegate: {
     module: "staking",
-    example: (secretjs: SecretNetworkClient): object => ({
-      delegator_address: secretjs.address,
-      validator_src_address: "secretvaloper1example1",
-      validator_dst_address: "secretvaloper1example2",
-      amount: "1uscrt",
-    }),
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.delegator_address = secretjs.address;
+        return old;
+      }
+
+      return {
+        delegator_address: secretjs.address,
+        validator_src_address: "secretvaloper1example1",
+        validator_dst_address: "secretvaloper1example2",
+        amount: "1uscrt",
+      };
+    },
     converter: (input: any): SupportedMessage => {
       input.amount = coinFromString(input.amount);
       return new MsgBeginRedelegate(input);
@@ -168,24 +193,31 @@ export const messages: {
   },
   MsgCreateValidator: {
     module: "staking",
-    example: (secretjs: SecretNetworkClient): object => ({
-      delegator_address: secretjs.address,
-      commission: {
-        max_change_rate: 0.01, // can change +-1% every 24h
-        max_rate: 0.1, // 10%
-        rate: 0.05, // 5%
-      },
-      description: {
-        moniker: "My validator's display name",
-        identity: "ID on keybase.io, to have a logo on explorer and stuff",
-        website: "example.com",
-        security_contact: "security@example.com",
-        details: "We are good",
-      },
-      pubkey: toBase64(new Uint8Array(32).fill(1)), // validator tendermit pubkey
-      min_self_delegation: "1", // uscrt
-      initial_delegation: "1uscrt",
-    }),
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.delegator_address = secretjs.address;
+        return old;
+      }
+
+      return {
+        delegator_address: secretjs.address,
+        commission: {
+          max_change_rate: 0.01, // can change +-1% every 24h
+          max_rate: 0.1, // 10%
+          rate: 0.05, // 5%
+        },
+        description: {
+          moniker: "My validator's display name",
+          identity: "ID on keybase.io, to have a logo on explorer and stuff",
+          website: "example.com",
+          security_contact: "security@example.com",
+          details: "We are good",
+        },
+        pubkey: toBase64(new Uint8Array(32).fill(1)), // validator tendermit pubkey
+        min_self_delegation: "1", // uscrt
+        initial_delegation: "1uscrt",
+      };
+    },
     converter: (input: any) => {
       input.initial_delegation = coinFromString(input.amount);
       return new MsgCreateValidator(input);
@@ -193,13 +225,20 @@ export const messages: {
   },
   MsgCreateVestingAccount: {
     module: "vesting",
-    example: (secretjs: SecretNetworkClient): object => ({
-      from_address: secretjs.address,
-      to_address: "secret1example",
-      amount: "1uscrt",
-      end_time: "2020-09-15T14:00:00Z",
-      delayed: false,
-    }),
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.from_address = secretjs.address;
+        return old;
+      }
+
+      return {
+        from_address: secretjs.address,
+        to_address: "secret1example",
+        amount: "1uscrt",
+        end_time: "2020-09-15T14:00:00Z",
+        delayed: false,
+      };
+    },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
       return new MsgCreateVestingAccount(input);
@@ -207,11 +246,18 @@ export const messages: {
   },
   MsgDeposit: {
     module: "gov",
-    example: (secretjs: SecretNetworkClient): object => ({
-      proposal_id: "1",
-      depositor: secretjs.address,
-      amount: "1uscrt",
-    }),
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.depositor = secretjs.address;
+        return old;
+      }
+
+      return {
+        depositor: secretjs.address,
+        proposal_id: "1",
+        amount: "1uscrt",
+      };
+    },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
       return new MsgDeposit(input);
@@ -219,41 +265,60 @@ export const messages: {
   },
   MsgEditValidator: {
     module: "staking",
-    example: (secretjs: SecretNetworkClient): MsgEditValidatorParams => ({
-      validator_address: selfDelegatorAddressToValidatorAddress(
-        secretjs.address
-      ),
-      // optional: if description is provided it updates all values
-      description: {
-        moniker: "My new validator's display name",
-        identity: "ID on keybase.io, to have a logo on explorer and stuff",
-        website: "edited-example.com",
-        security_contact: "security@edited-example.com",
-        details: "We are good probably",
-      },
-      commission_rate: 0.04, // optional: 4% commission cannot be changed more than once in 24h
-      min_self_delegation: "3", // optional: 3uscrt
-    }),
+    example: (
+      secretjs: SecretNetworkClient,
+      old: any
+    ): MsgEditValidatorParams => {
+      if (old) {
+        old.validator_address = selfDelegatorAddressToValidatorAddress(
+          secretjs.address
+        );
+        return old;
+      }
+
+      return {
+        validator_address: selfDelegatorAddressToValidatorAddress(
+          secretjs.address
+        ),
+        // optional: if description is provided it updates all values
+        description: {
+          moniker: "My new validator's display name",
+          identity: "ID on keybase.io, to have a logo on explorer and stuff",
+          website: "edited-example.com",
+          security_contact: "security@edited-example.com",
+          details: "We are good probably",
+        },
+        commission_rate: 0.04, // optional: 4% commission cannot be changed more than once in 24h
+        min_self_delegation: "3", // optional: 3uscrt
+      };
+    },
     converter: (input: any): SupportedMessage => new MsgEditValidator(input),
   },
   // MsgExec: {
   //   module: "authz",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   MsgExecuteContract: {
     module: "compute",
-    example: (secretjs: SecretNetworkClient): object => ({
-      sender: secretjs.address,
-      contract_address: "secret1example",
-      msg: {
-        create_viewing_key: {
-          entropy: "bla bla",
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.sender = secretjs.address;
+        return old;
+      }
+
+      return {
+        sender: secretjs.address,
+        contract_address: "secret1example",
+        msg: {
+          create_viewing_key: {
+            entropy: "bla bla",
+          },
         },
-      },
-      code_hash: "abcdefg", // optional
-      sent_funds: "1uscrt", // optional
-    }),
+        code_hash: "abcdefg", // optional
+        sent_funds: "1uscrt", // optional
+      };
+    },
     converter: (input: any): SupportedMessage => {
       input.sent_funds = coinsFromString(input.sent_funds);
       return new MsgExecuteContract(input);
@@ -261,10 +326,17 @@ export const messages: {
   },
   MsgFundCommunityPool: {
     module: "distribution",
-    example: (secretjs: SecretNetworkClient): object => ({
-      depositor: secretjs.address,
-      amount: "1uscrt",
-    }),
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.depositor = secretjs.address;
+        return old;
+      }
+
+      return {
+        depositor: secretjs.address,
+        amount: "1uscrt",
+      };
+    },
     converter: (input: any): SupportedMessage => {
       input.amount = coinsFromString(input.amount);
       return new MsgFundCommunityPool(input);
@@ -272,51 +344,65 @@ export const messages: {
   },
   // MsgGrant: {
   //   module: "authz",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgGrantAllowance: {
   //   module: "feegrant",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   MsgInstantiateContract: {
     module: "compute",
-    example: (secretjs: SecretNetworkClient): object => ({
-      sender: secretjs.address,
-      code_id: 1,
-      init_msg: {
-        gm: {
-          hello: "world",
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.sender = secretjs.address;
+        return old;
+      }
+
+      return {
+        sender: secretjs.address,
+        code_id: 1,
+        init_msg: {
+          gm: {
+            hello: "world",
+          },
         },
-      },
-      label: "gm",
-      init_funds: "1uscrt", // optional
-      code_hash: "abcdefg", // optional
-    }),
+        label: "gm",
+        init_funds: "1uscrt", // optional
+        code_hash: "abcdefg", // optional
+      };
+    },
     converter: (input: any): SupportedMessage =>
       new MsgInstantiateContract(input),
   },
   MsgMultiSend: {
     module: "bank",
-    example: (secretjs: SecretNetworkClient): object => ({
-      inputs: [
-        {
-          address: secretjs.address,
-          coins: "2uscrt",
-        },
-      ],
-      outputs: [
-        {
-          address: "secret1example",
-          coins: "1uscrt",
-        },
-        {
-          address: "secret1example",
-          coins: "1uscrt",
-        },
-      ],
-    }),
+    example: (secretjs: SecretNetworkClient, old: any): object => {
+      if (old) {
+        old.inputs[0].address = secretjs.address;
+        return old;
+      }
+
+      return {
+        inputs: [
+          {
+            address: secretjs.address,
+            coins: "2uscrt",
+          },
+        ],
+        outputs: [
+          {
+            address: "secret1example",
+            coins: "1uscrt",
+          },
+          {
+            address: "secret1example",
+            coins: "1uscrt",
+          },
+        ],
+      };
+    },
     converter: (input: any): SupportedMessage => {
       for (let i = 0; i < input.inputs.length; i++) {
         input.inputs[i].coins = coinsFromString(input.inputs[i].coins);
@@ -330,58 +416,58 @@ export const messages: {
   },
   // MsgRevoke: {
   //   module: "authz",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgRevokeAllowance: {
   //   module: "feegrant",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgSetWithdrawAddress: {
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgStoreCode: {
   //   module: "compute",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgSubmitProposal: {
   //   module: "gov",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgTransfer: {
   //   module: "ibc-transfer",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgUndelegate: {
   //   module: "staking",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgUnjail: {
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgVote: {
   //   module: "gov",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgVoteWeighted: {
   //   module: "gov",
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgWithdrawDelegatorReward: {
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
   // MsgWithdrawValidatorCommission: {
-  //   example: (secretjs: SecretNetworkClient): object => ({}),
+  //   example: (secretjs: SecretNetworkClient,old:any): object => ({}),
   //   converter: (input: any): MsgWithdrawValidatorCommission => {},
   // },
 };

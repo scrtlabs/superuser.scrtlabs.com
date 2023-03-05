@@ -10,7 +10,7 @@ import {
   Divider,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Route, Routes } from "react-router";
 import { BreakpointProvider } from "react-socks";
@@ -56,6 +56,32 @@ export default function App() {
       },
     }
   );
+
+  useEffect(() => {
+    if (!secretjs) {
+      return;
+    }
+
+    Object.keys(state).forEach((msgIndex) => {
+      if (!messages[state[msgIndex][0]]?.example) {
+        return;
+      }
+
+      setState((state) => ({
+        [msgIndex]: [
+          state[msgIndex][0],
+          JSON.stringify(
+            messages[state[msgIndex][0]].example(
+              secretjs,
+              JSON.parse(state[msgIndex][1])
+            ),
+            null,
+            2
+          ),
+        ],
+      }));
+    });
+  }, [secretjs]);
 
   return (
     <div style={{ padding: "0.5rem" }}>
@@ -122,7 +148,8 @@ export default function App() {
                               ? input
                               : JSON.stringify(
                                   messages[state[msgIndex][0]]?.example(
-                                    secretjs
+                                    secretjs,
+                                    null
                                   ),
                                   null,
                                   2
@@ -136,7 +163,7 @@ export default function App() {
                             type,
                             type !== state[msgIndex][0]
                               ? JSON.stringify(
-                                  messages[type]?.example(secretjs),
+                                  messages[type]?.example(secretjs, null),
                                   null,
                                   2
                                 ) || ""
