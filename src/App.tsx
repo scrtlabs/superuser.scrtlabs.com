@@ -13,12 +13,12 @@ import {
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Route, Routes } from "react-router";
+import { BrowserRouter } from "react-router-dom";
 import { BreakpointProvider } from "react-socks";
-import { Msg, SecretNetworkClient } from "secretjs";
+import { SecretNetworkClient } from "secretjs";
 import "./index.css";
 import MsgEditor, { messages } from "./Msg";
 import { WalletPanel } from "./WalletStuff";
-import { BrowserRouter } from "react-router-dom";
 
 ReactDOM.render(
   <BreakpointProvider>
@@ -231,9 +231,14 @@ export default function App() {
                       setTxDialogSuccess(tx.transactionHash);
                     } else {
                       setTxDialogError(
-                        <span>
-                          <div>{tx.rawLog}</div>
-                          <div
+                        <span
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <span>{tx.rawLog}</span>
+                          <span
                             style={{
                               display: "flex",
                               justifyContent: "center",
@@ -246,7 +251,7 @@ export default function App() {
                             >
                               Open explorer
                             </a>
-                          </div>
+                          </span>
                         </span>
                       );
                     }
