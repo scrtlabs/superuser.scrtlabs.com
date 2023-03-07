@@ -746,11 +746,23 @@ async function stakingRelevantInfo(
         .join(",") || "";
   }
 
+  const validators: { [validator: string]: string } = {};
+  for (const validator_addr of Object.keys(pendingRewards)) {
+    const { validator } = await secretjs.query.staking.validator({
+      validator_addr,
+    });
+
+    validators[validator_addr] = validator!.description!.moniker!;
+  }
+
   const delegations = delegation_responses?.map((d) => {
     return (
       <tr key={`${d.delegation?.validator_address}`}>
         <td>{`${d.balance?.amount}${d.balance?.denom}`}</td>
-        <td>{d.delegation?.validator_address}</td>
+        <td>
+          {d.delegation?.validator_address} (
+          {validators[d.delegation?.validator_address!]})
+        </td>
         <td>{pendingRewards[d.delegation?.validator_address!]}</td>
       </tr>
     );
