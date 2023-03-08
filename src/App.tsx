@@ -2,6 +2,7 @@ import useUrlState from "@ahooksjs/use-url-state";
 import {
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,6 +23,9 @@ import "./index.css";
 import { balanceFormat, messages as Msgs } from "./Msgs";
 import MsgEditor from "./MsgEditor";
 import { setupKeplr, WalletPanel } from "./WalletStuff";
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
+import ErrorIcon from "@mui/icons-material/Error";
 
 ReactDOM.render(
   <BreakpointProvider>
@@ -46,7 +50,7 @@ export default function App() {
   const [isTxDialogOpen, setIsTxDialogOpen] = useState<boolean>(false);
   const [txDialogError, setTxDialogError] = useState<JSX.Element | null>(null);
   const [txDialogSuccess, setTxDialogSuccess] = useState<any>(null);
-  const [nodeStatus, setNodeStatus] = useState<string>("");
+  const [nodeStatus, setNodeStatus] = useState<JSX.Element | string>("");
   const [apiUrl, setApiUrl] = useState<string>("https://lcd.secret.express");
   const [chainId, setChainId] = useState<string>("secret-4");
 
@@ -64,41 +68,123 @@ export default function App() {
     }
   );
 
+  const refreshNodeStatus = async (
+    secretjs: SecretNetworkClient,
+    showLoading: boolean
+  ) => {
+    try {
+      if (showLoading) {
+        setNodeStatus(
+          <div style={{ display: "flex", placeItems: "center", gap: "0.5rem" }}>
+            <CircleIcon color={"disabled"} sx={{ fontSize: "small" }} />
+            <CircularProgress size={"1em"} />
+            <span>Loading...</span>
+          </div>
+        );
+      }
+
+      const { block } = await secretjs.query.tendermint.getLatestBlock({});
+      const { minimum_gas_price } = await secretjs.query.node.config({});
+
+      const chainId = block?.header?.chain_id!;
+      setChainId(chainId);
+
+      if (secretjs) {
+        setupKeplr(setSecretjs, setSecretAddress, apiUrl, chainId);
+      }
+
+      setNodeStatus(
+        <div style={{ display: "flex", placeItems: "center", gap: "1rem" }}>
+          <CircleIcon color={"success"} sx={{ fontSize: "small" }} />
+          <span
+            style={{
+              display: "flex",
+              placeItems: "center",
+              gap: "0.3rem",
+              minWidth: "10em",
+            }}
+          >
+            <img src="/scrt.svg" style={{ width: "1.5em", borderRadius: 10 }} />
+            <span>
+              <strong>Chain:</strong> {chainId}
+            </span>
+          </span>
+          <span
+            style={{
+              display: "flex",
+              placeItems: "center",
+              gap: "0.3rem",
+              minWidth: "15em",
+            }}
+          >
+            <ViewInArIcon />
+            <span>
+              <strong>Block:</strong>{" "}
+              {balanceFormat(Number(block?.header?.height))} (
+              {Math.floor(
+                (Date.now() - Date.parse(block?.header?.time as string)) / 1000
+              )}
+              s ago)
+            </span>
+          </span>
+          <span
+            style={{
+              display: "flex",
+              placeItems: "center",
+              gap: "0.3rem",
+              minWidth: "10em",
+            }}
+          >
+            <LocalGasStationIcon />
+            <span>
+              <strong>Gas price:</strong>{" "}
+              {minimum_gas_price!.replace(/0*uscrt/, "uscrt")}
+            </span>
+          </span>
+        </div>
+      );
+    } catch (error) {
+      let errorMessage: string;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = JSON.stringify(error);
+      }
+
+      setNodeStatus(
+        <div style={{ display: "flex", placeItems: "center", gap: "0.5rem" }}>
+          <CircleIcon color={"error"} sx={{ fontSize: "small" }} />
+          <ErrorIcon />
+          <span>Error: {errorMessage}</span>
+        </div>
+      );
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setApiUrl((apiUrl) => {
+        const secretjs = new SecretNetworkClient({
+          url: apiUrl,
+          chainId: "",
+        });
+
+        refreshNodeStatus(secretjs, false);
+
+        return apiUrl;
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const secretjs = new SecretNetworkClient({
       url: apiUrl,
       chainId: "",
     });
 
-    (async () => {
-      try {
-        setNodeStatus("Loading...");
-
-        const { block } = await secretjs.query.tendermint.getLatestBlock({});
-        const { minimum_gas_price } = await secretjs.query.node.config({});
-
-        const chainId = block?.header?.chain_id!;
-        setChainId(chainId);
-
-        if (secretjs) {
-          setupKeplr(setSecretjs, setSecretAddress, apiUrl, chainId);
-        }
-
-        setNodeStatus(
-          `Chain: ${chainId}, Block: ${balanceFormat(
-            Number(block?.header?.height)
-          )} (${Math.floor(
-            (Date.now() - Date.parse(block?.header?.time as string)) / 1000
-          )}s ago), Gas Price: ${minimum_gas_price!.replace(
-            /0*uscrt/,
-            "uscrt"
-          )}`
-        );
-      } catch (error) {
-        //@ts-expect-error
-        setNodeStatus(`Error: ${error.message}`);
-      }
-    })();
+    refreshNodeStatus(secretjs, true);
   }, [apiUrl]);
 
   useEffect(() => {
@@ -200,16 +286,6 @@ export default function App() {
                 variant="outlined"
                 value={apiUrl}
                 onChange={(e) => setApiUrl(e.target.value)}
-              />
-              <CircleIcon
-                color={
-                  nodeStatus.startsWith("Error")
-                    ? "error"
-                    : nodeStatus.startsWith("Loading")
-                    ? "disabled"
-                    : "success"
-                }
-                sx={{ fontSize: "small" }}
               />
               <Typography>{nodeStatus}</Typography>
             </div>

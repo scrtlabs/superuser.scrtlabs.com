@@ -1860,9 +1860,9 @@ react-router@6.8.2, react-router@^6.8.2:
   dependencies:
     "@remix-run/router" "1.3.3"
 
-react-socks@2.2.0:
+react-socks@false2.2.0:
   version "2.2.0"
-  resolved "https://registry.npmjs.org/react-socks/-/react-socks-2.2.0.tgz"
+  resolved "https://registry.yarnpkg.com/react-socks/-/react-socks-2.2.0.tgz#8b3884a5a735f21119ad44244f7e754afe9d98fe"
   integrity sha512-JHK7WM4nA8M28CJ/PXlJI/yjg61TlhdsM8BAD5tvWDEO0uT9iFpU671SGl43TEcdPmlytB7nc95PzWIFYTI4/w==
 
 react-transition-group@^4.4.5:
