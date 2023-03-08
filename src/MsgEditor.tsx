@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { SecretNetworkClient } from "secretjs";
-import { messages } from "./Msgs";
+import { messages, SupportedMessage } from "./Msgs";
 
 export default function MsgEditor({
   secretjs,
@@ -26,19 +26,45 @@ export default function MsgEditor({
   invokeDelete: () => void;
 }) {
   const [relevantInfo, setRelevantInfo] = useState<any>(null);
-  const [loadingInfo, setLoadingInfo] = useState<boolean>(false);
+  const [isLoadingInfo, setIsLoadingInfo] = useState<boolean>(false);
+  const [isLoadingError, setIsLoadingError] = useState<boolean>(false);
+  const [isError, setIsError] = useState<boolean>(false);
+  const [errorText, setErrorText] = useState<string>("");
 
   useEffect(() => {
     (async () => {
       if (messages[msgType]?.relevantInfo) {
-        setLoadingInfo(true);
+        setIsLoadingInfo(true);
         setRelevantInfo(await messages[msgType].relevantInfo!(secretjs));
-        setLoadingInfo(false);
+        setIsLoadingInfo(false);
       } else {
         setRelevantInfo(null);
       }
     })();
   }, [msgType]);
+
+  useEffect(() => {
+    setIsError(false);
+    setErrorText("");
+  }, [msgType, msgInput]);
+
+  const checkError = async () => {
+    setIsLoadingError(true);
+
+    const result = await checkMsg(msgType, msgInput, secretjs);
+
+    setErrorText(result);
+    if (result === "") {
+      setIsError(false);
+    } else {
+      setIsError(true);
+    }
+    setIsLoadingError(false);
+  };
+
+  useEffect(() => {
+    checkError();
+  }, []);
 
   return (
     <>
@@ -89,32 +115,32 @@ export default function MsgEditor({
           maxRows={500}
           value={msgInput}
           onChange={(e) => setMsgInput(e.target.value)}
-          error={(() => {
-            if (!messages[msgType]) {
-              return false;
-            }
-
+          error={isError}
+          helperText={
+            isLoadingError ? (
+              <span
+                style={{
+                  display: "flex",
+                  gap: "0.5em",
+                  placeItems: "center",
+                }}
+              >
+                <CircularProgress size="1em" />
+                <Typography sx={{ fontSize: "1em" }}>Simulating...</Typography>
+              </span>
+            ) : (
+              errorText
+            )
+          }
+          onBlur={() => {
             try {
-              messages[msgType].converter(JSON.parse(msgInput));
-              return false;
-            } catch (error) {
-              return true;
-            }
-          })()}
-          helperText={(() => {
-            if (!msgType) {
-              return "";
-            }
-            try {
-              messages[msgType].converter(JSON.parse(msgInput));
-            } catch (error) {
-              //@ts-ignore
-              return error.message;
-            }
-          })()}
+              setMsgInput(JSON.stringify(JSON.parse(msgInput), null, 2));
+            } catch (error) {}
+            checkError();
+          }}
         />
       </div>
-      {loadingInfo && (
+      {isLoadingInfo && (
         <div
           style={{
             display: "flex",
@@ -145,4 +171,40 @@ export default function MsgEditor({
       )}
     </>
   );
+}
+
+async function checkMsg(
+  type: string,
+  input: string,
+  secretjs: SecretNetworkClient
+): Promise<string> {
+  if (!messages[type]) {
+    return "";
+  }
+
+  let msg: SupportedMessage;
+  try {
+    msg = messages[type].converter(JSON.parse(input));
+  } catch (error) {
+    //@ts-ignore
+    return error.message;
+  }
+
+  try {
+    const sim = await secretjs.tx.simulate([msg], { gasLimit: 0 });
+    return "";
+  } catch (error) {
+    //@ts-ignore
+    const rawLog = error.message;
+
+    if (rawLog.includes("Enclave: failed to validate transaction")) {
+      // enclave won't work in simulation mode
+      // this check will only flag app-level errors (so in x/compute only errors from out of the enclave)
+      return "";
+    } else if (rawLog.includes("failed to execute message")) {
+      return rawLog;
+    } else {
+      return "";
+    }
+  }
 }

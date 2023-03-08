@@ -54,7 +54,7 @@ import {
   VoteOption,
 } from "secretjs";
 
-type SupportedMessage =
+export type SupportedMessage =
   | MsgBeginRedelegate
   | MsgCreateValidator
   | MsgCreateVestingAccount
@@ -315,8 +315,8 @@ export const messages: {
           sender: secretjs.address,
           contract_address: "secret1example",
           msg: {
-            create_viewing_key: {
-              entropy: "bla bla",
+            set_viewing_key: {
+              key: "banana 🍌",
             },
           },
           code_hash: "abcdefg", // optional
@@ -326,7 +326,9 @@ export const messages: {
       }
     },
     converter: (input: any): SupportedMessage => {
-      input.sent_funds = coinsFromString(input.sent_funds);
+      if (input.sent_funds) {
+        input.sent_funds = coinsFromString(input.sent_funds);
+      }
       return new MsgExecuteContract(input);
     },
   },
@@ -378,8 +380,12 @@ export const messages: {
         };
       }
     },
-    converter: (input: any): SupportedMessage =>
-      new MsgInstantiateContract(input),
+    converter: (input: any): SupportedMessage => {
+      if (input.init_funds) {
+        input.init_funds = coinsFromString(input.init_funds);
+      }
+      return new MsgInstantiateContract(input);
+    },
   },
   MsgMultiSend: {
     module: "bank",
@@ -668,7 +674,7 @@ export const messages: {
   },
 };
 
-const balanceFormat = new Intl.NumberFormat("en-US", {
+export const balanceFormat = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 6,
 }).format;

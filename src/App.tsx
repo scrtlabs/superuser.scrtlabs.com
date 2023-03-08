@@ -8,8 +8,10 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
+  TextField,
   Typography,
 } from "@mui/material";
+import CircleIcon from "@mui/icons-material/Circle";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Route, Routes } from "react-router";
@@ -17,9 +19,9 @@ import { BrowserRouter } from "react-router-dom";
 import { BreakpointProvider } from "react-socks";
 import { SecretNetworkClient } from "secretjs";
 import "./index.css";
-import { messages as Msgs } from "./Msgs";
+import { balanceFormat, messages as Msgs } from "./Msgs";
 import MsgEditor from "./MsgEditor";
-import { WalletPanel } from "./WalletStuff";
+import { setupKeplr, WalletPanel } from "./WalletStuff";
 
 ReactDOM.render(
   <BreakpointProvider>
@@ -44,6 +46,10 @@ export default function App() {
   const [isTxDialogOpen, setIsTxDialogOpen] = useState<boolean>(false);
   const [txDialogError, setTxDialogError] = useState<JSX.Element | null>(null);
   const [txDialogSuccess, setTxDialogSuccess] = useState<any>(null);
+  const [nodeStatus, setNodeStatus] = useState<string>("");
+  const [apiUrl, setApiUrl] = useState<string>("https://lcd.secret.express");
+  const [chainId, setChainId] = useState<string>("secret-4");
+
   const [state, setState] = useUrlState<State>(
     {
       "0": ["", ""],
@@ -57,6 +63,43 @@ export default function App() {
       },
     }
   );
+
+  useEffect(() => {
+    const secretjs = new SecretNetworkClient({
+      url: apiUrl,
+      chainId: "",
+    });
+
+    (async () => {
+      try {
+        setNodeStatus("Loading...");
+
+        const { block } = await secretjs.query.tendermint.getLatestBlock({});
+        const { minimum_gas_price } = await secretjs.query.node.config({});
+
+        const chainId = block?.header?.chain_id!;
+        setChainId(chainId);
+
+        if (secretjs) {
+          setupKeplr(setSecretjs, setSecretAddress, apiUrl, chainId);
+        }
+
+        setNodeStatus(
+          `Chain: ${chainId}, Block: ${balanceFormat(
+            Number(block?.header?.height)
+          )} (${Math.floor(
+            (Date.now() - Date.parse(block?.header?.time as string)) / 1000
+          )}s ago), Gas Price: ${minimum_gas_price!.replace(
+            /0*uscrt/,
+            "uscrt"
+          )}`
+        );
+      } catch (error) {
+        //@ts-expect-error
+        setNodeStatus(`Error: ${error.message}`);
+      }
+    })();
+  }, [apiUrl]);
 
   useEffect(() => {
     if (!secretjs) {
@@ -100,6 +143,8 @@ export default function App() {
           setSecretjs={setSecretjs}
           secretAddress={secretAddress}
           setSecretAddress={setSecretAddress}
+          url={apiUrl}
+          chainId={chainId}
         />
       </div>
       <div
@@ -128,8 +173,46 @@ export default function App() {
         >
           send complex transactions.
         </Typography>
-        {secretjs && (
-          <>
+      </div>
+      {secretjs && (
+        <>
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              placeItems: "center",
+              placeContent: "center",
+              gap: "0.3rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                width: "95%",
+                paddingLeft: "2rem",
+                gap: "0.5rem",
+                alignItems: "center",
+              }}
+            >
+              <TextField
+                label="API"
+                variant="outlined"
+                value={apiUrl}
+                onChange={(e) => setApiUrl(e.target.value)}
+              />
+              <CircleIcon
+                color={
+                  nodeStatus.startsWith("Error")
+                    ? "error"
+                    : nodeStatus.startsWith("Loading")
+                    ? "disabled"
+                    : "success"
+                }
+                sx={{ fontSize: "small" }}
+              />
+              <Typography>{nodeStatus}</Typography>
+            </div>
             <div style={{ width: "95%" /* , maxWidth: "45rem" */ }}>
               {Object.keys(state).map((msgIndex) => {
                 return (
@@ -310,9 +393,9 @@ export default function App() {
                 ) : null}
               </Dialog>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

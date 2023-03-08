@@ -1977,10 +1977,10 @@ screenfull@^5.0.0:
   resolved "https://registry.yarnpkg.com/screenfull/-/screenfull-5.2.0.tgz#6533d524d30621fc1283b9692146f3f13a93d1ba"
   integrity sha512-9BakfsO2aUQN2K9Fdbj87RJIEZ82Q9IGim7FqM5OsebfoFC6ZHXgDq/KvniuLTPdeM8wY2o6Dj3WQ7KeQCj3cA==
 
-secretjs@^1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/secretjs/-/secretjs-1.7.2.tgz#cf5d25089db90525e7d27f4baee01fdf3917d25e"
-  integrity sha512-HcFwO4rnhaLAfdsVILNmrMFV43otF87qM3mVMKSqJkSBONV2RgbBUPm5jlxarORfDb3OROcWL6TIYp+1ajKeBw==
+secretjs@false1.8.1:
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/secretjs/-/secretjs-1.8.1.tgz#0f9b054c8a2f55567be2566c482e06b9e15bd4c9"
+  integrity sha512-Yx+iPE5EkOPpP1cwHhVso+8A+3v34qGVWLi5uHps8nJFPa60n3h/QI0NAnn4OmXcQ24s287mYUdVzLZiAemq1w==
   dependencies:
     "@cosmjs/encoding" "0.27.1"
     "@cosmjs/math" "0.27.1"

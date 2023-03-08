@@ -20,11 +20,15 @@ export function WalletPanel({
   setSecretjs,
   secretAddress,
   setSecretAddress,
+  url,
+  chainId,
 }: {
   secretjs: SecretNetworkClient | null;
   setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>;
   secretAddress: string;
   setSecretAddress: React.Dispatch<React.SetStateAction<string>>;
+  url: string;
+  chainId: string;
 }) {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
@@ -88,14 +92,14 @@ export function WalletPanel({
   } else {
     try {
       // superusers don't click around
-      setupKeplr(setSecretjs, setSecretAddress);
+      setupKeplr(setSecretjs, setSecretAddress, url, chainId);
     } catch (error) {}
     return (
       <Button
         id="keplr-button"
         variant="contained"
         style={{ background: "white", color: "black" }}
-        onClick={() => setupKeplr(setSecretjs, setSecretAddress)}
+        onClick={() => setupKeplr(setSecretjs, setSecretAddress, url, chainId)}
       >
         {content}
       </Button>
@@ -103,9 +107,11 @@ export function WalletPanel({
   }
 }
 
-async function setupKeplr(
+export async function setupKeplr(
   setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>,
-  setSecretAddress: React.Dispatch<React.SetStateAction<string>>
+  setSecretAddress: React.Dispatch<React.SetStateAction<string>>,
+  url: string,
+  chainId: string
 ) {
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
@@ -118,21 +124,19 @@ async function setupKeplr(
     await sleep(50);
   }
 
-  const SECRET_CHAIN_ID = "secret-4";
+  await window.keplr.enable(chainId);
 
-  await window.keplr.enable(SECRET_CHAIN_ID);
-
-  const keplrOfflineSigner = window.getOfflineSignerOnlyAmino(SECRET_CHAIN_ID);
+  const keplrOfflineSigner = window.getOfflineSignerOnlyAmino(chainId);
   const accounts = await keplrOfflineSigner.getAccounts();
 
   const secretAddress = accounts[0].address;
 
   const secretjs = new SecretNetworkClient({
-    url: "https://lcd.secret.express",
-    chainId: SECRET_CHAIN_ID,
+    url,
+    chainId: chainId,
     wallet: keplrOfflineSigner,
     walletAddress: secretAddress,
-    encryptionUtils: window.getEnigmaUtils(SECRET_CHAIN_ID),
+    encryptionUtils: window.getEnigmaUtils(chainId),
   });
 
   setSecretAddress(secretAddress);
