@@ -17,6 +17,8 @@ export default function MsgEditor({
   msgInput,
   setMsgType,
   setMsgInput,
+  prefix,
+  denom,
 }: {
   secretjs: SecretNetworkClient;
   msgType: string;
@@ -24,6 +26,8 @@ export default function MsgEditor({
   setMsgType: (type: string) => void;
   setMsgInput: (input: string) => void;
   invokeDelete: () => void;
+  prefix: string;
+  denom: string;
 }) {
   const [relevantInfo, setRelevantInfo] = useState<any>(null);
   const [isLoadingInfo, setIsLoadingInfo] = useState<boolean>(false);
@@ -35,7 +39,9 @@ export default function MsgEditor({
     (async () => {
       if (messages[msgType]?.relevantInfo) {
         setIsLoadingInfo(true);
-        setRelevantInfo(await messages[msgType].relevantInfo!(secretjs));
+        setRelevantInfo(
+          await messages[msgType].relevantInfo!(secretjs, prefix, denom)
+        );
         setIsLoadingInfo(false);
       } else {
         setRelevantInfo(null);
@@ -51,7 +57,7 @@ export default function MsgEditor({
   const checkError = async () => {
     setIsLoadingError(true);
 
-    const result = await checkMsg(msgType, msgInput, secretjs);
+    const result = await checkMsg(msgType, msgInput, secretjs, prefix, denom);
 
     setErrorText(result);
     if (result === "") {
@@ -89,9 +95,7 @@ export default function MsgEditor({
             }
           })}
           sx={{ width: "21rem" }}
-          renderInput={(params) => (
-            <TextField {...params} label="Message Type" />
-          )}
+          renderInput={(params) => <TextField {...params} label="Type" />}
           value={msgType}
           onChange={(_, newMsgType) => setMsgType(newMsgType || "")}
         />
@@ -109,7 +113,7 @@ export default function MsgEditor({
       >
         <TextField
           sx={{ width: "100%" }}
-          label="Message Content"
+          label="Content"
           multiline
           minRows={5}
           maxRows={500}
@@ -162,8 +166,8 @@ export default function MsgEditor({
           }}
         >
           <Typography component="div" align="left" sx={{ fontSize: "small" }}>
-            <details>
-              <summary style={{ cursor: "pointer" }}> Relevant info</summary>
+            <details open>
+              <summary style={{ cursor: "pointer" }}>Relevant info</summary>
               {relevantInfo}
             </details>
           </Typography>
@@ -176,7 +180,9 @@ export default function MsgEditor({
 async function checkMsg(
   type: string,
   input: string,
-  secretjs: SecretNetworkClient
+  secretjs: SecretNetworkClient,
+  prefix: string,
+  denom: string
 ): Promise<string> {
   if (!messages[type]) {
     return "";
@@ -184,7 +190,7 @@ async function checkMsg(
 
   let msg: SupportedMessage;
   try {
-    msg = messages[type].converter(JSON.parse(input));
+    msg = messages[type].converter(JSON.parse(input), prefix, denom);
   } catch (error) {
     //@ts-ignore
     return error.message;

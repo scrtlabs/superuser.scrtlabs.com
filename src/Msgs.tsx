@@ -86,16 +86,27 @@ export type SupportedMessage =
 export const messages: {
   [name: string]: {
     module: string;
-    example: (secretjs: SecretNetworkClient, old: any) => any;
-    converter: (input: any) => SupportedMessage;
-    relevantInfo?: (secretjs: SecretNetworkClient) => Promise<any>;
+    example: (
+      secretjs: SecretNetworkClient,
+      old: any,
+      prefix: string,
+      denom: string
+    ) => any;
+    converter: (input: any, prefix: string, denom: string) => SupportedMessage;
+    relevantInfo?: (
+      secretjs: SecretNetworkClient,
+      prefix: string,
+      denom: string
+    ) => Promise<any>;
   };
 } = {
   MsgSend: {
     module: "bank",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgSendParams
+      old: MsgSendParams,
+      prefix: string,
+      denom: string
     ): MsgSendParams => {
       if (old) {
         old.from_address = secretjs.address;
@@ -103,9 +114,9 @@ export const messages: {
       } else {
         return {
           from_address: secretjs.address,
-          to_address: "secret1example",
+          to_address: `${prefix}1example`,
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
         };
       }
     },
@@ -119,7 +130,9 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgDelegateParams
+      old: MsgDelegateParams,
+      prefix: string,
+      denom: string
     ): MsgDelegateParams => {
       if (old) {
         old.delegator_address = secretjs.address;
@@ -127,9 +140,9 @@ export const messages: {
       } else {
         return {
           delegator_address: secretjs.address,
-          validator_address: "secretvaloper1example",
+          validator_address: `${prefix}valoper1example`,
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
         };
       }
     },
@@ -143,7 +156,9 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgSetAutoRestakeParams
+      old: MsgSetAutoRestakeParams,
+      prefix: string,
+      denom: string
     ): MsgSetAutoRestakeParams => {
       if (old) {
         old.delegator_address = secretjs.address;
@@ -151,7 +166,7 @@ export const messages: {
       } else {
         return {
           delegator_address: secretjs.address,
-          validator_address: "secretvaloper1example",
+          validator_address: `${prefix}valoper1example`,
           enabled: true,
         };
       }
@@ -165,7 +180,9 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgBeginRedelegateParams
+      old: MsgBeginRedelegateParams,
+      prefix: string,
+      denom: string
     ): MsgBeginRedelegateParams => {
       if (old) {
         old.delegator_address = secretjs.address;
@@ -173,10 +190,10 @@ export const messages: {
       } else {
         return {
           delegator_address: secretjs.address,
-          validator_src_address: "secretvaloper1example",
-          validator_dst_address: "secretvaloper1example",
+          validator_src_address: `${prefix}valoper1example`,
+          validator_dst_address: `${prefix}valoper1example`,
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
         };
       }
     },
@@ -190,7 +207,9 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgCreateValidatorParams
+      old: MsgCreateValidatorParams,
+      prefix: string,
+      denom: string
     ): MsgCreateValidatorParams => {
       if (old) {
         old.delegator_address = secretjs.address;
@@ -211,9 +230,9 @@ export const messages: {
             details: "We are good",
           },
           pubkey: toBase64(new Uint8Array(32).fill(1)), // validator tendermit pubkey
-          min_self_delegation: "1", // uscrt
+          min_self_delegation: "1", // ${denom}
           //@ts-ignore
-          initial_delegation: "1uscrt",
+          initial_delegation: `1${denom}`,
         };
       }
     },
@@ -226,7 +245,9 @@ export const messages: {
     module: "vesting",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgCreateVestingAccountParams
+      old: MsgCreateVestingAccountParams,
+      prefix: string,
+      denom: string
     ): MsgCreateVestingAccountParams => {
       if (old) {
         old.from_address = secretjs.address;
@@ -234,9 +255,9 @@ export const messages: {
       } else {
         return {
           from_address: secretjs.address,
-          to_address: "secret1example",
+          to_address: `${prefix}1example`,
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
           end_time: "2020-09-15T14:00:00Z",
           delayed: false,
         };
@@ -251,7 +272,9 @@ export const messages: {
     module: "gov",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgDepositParams
+      old: MsgDepositParams,
+      prefix: string,
+      denom: string
     ): MsgDepositParams => {
       if (old) {
         old.depositor = secretjs.address;
@@ -261,7 +284,7 @@ export const messages: {
           depositor: secretjs.address,
           proposal_id: "1",
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
         };
       }
     },
@@ -274,17 +297,21 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgEditValidatorParams
+      old: MsgEditValidatorParams,
+      prefix: string,
+      denom: string
     ): MsgEditValidatorParams => {
       if (old) {
         old.validator_address = selfDelegatorAddressToValidatorAddress(
-          secretjs.address
+          secretjs.address,
+          prefix
         );
         return old;
       } else {
         return {
           validator_address: selfDelegatorAddressToValidatorAddress(
-            secretjs.address
+            secretjs.address,
+            prefix
           ),
           // optional: if description is provided it updates all values
           description: {
@@ -295,7 +322,7 @@ export const messages: {
             details: "We are good probably",
           },
           commission_rate: 0.04, // optional: 4% commission cannot be changed more than once in 24h
-          min_self_delegation: "3", // optional: 3uscrt
+          min_self_delegation: "3", // optional: 3${denom}
         };
       }
     },
@@ -305,7 +332,9 @@ export const messages: {
     module: "compute",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgExecuteContractParams<any>
+      old: MsgExecuteContractParams<any>,
+      prefix: string,
+      denom: string
     ): MsgExecuteContractParams<any> => {
       if (old) {
         old.sender = secretjs.address;
@@ -313,7 +342,7 @@ export const messages: {
       } else {
         return {
           sender: secretjs.address,
-          contract_address: "secret1example",
+          contract_address: `${prefix}1example`,
           msg: {
             set_viewing_key: {
               key: "banana 🍌",
@@ -321,7 +350,7 @@ export const messages: {
           },
           code_hash: "abcdefg", // optional
           //@ts-ignore
-          sent_funds: "1uscrt", // optional
+          sent_funds: `1${denom}`, // optional
         };
       }
     },
@@ -345,7 +374,7 @@ export const messages: {
         return {
           depositor: secretjs.address,
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
         };
       }
     },
@@ -375,7 +404,7 @@ export const messages: {
           },
           label: "gm",
           //@ts-ignore
-          init_funds: "1uscrt", // optional
+          init_funds: `1${denom}`, // optional
           code_hash: "abcdefg", // optional
         };
       }
@@ -391,7 +420,9 @@ export const messages: {
     module: "bank",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgMultiSendParams
+      old: MsgMultiSendParams,
+      prefix: string,
+      denom: string
     ): MsgMultiSendParams => {
       if (old) {
         old.inputs[0].address = secretjs.address;
@@ -402,19 +433,19 @@ export const messages: {
             {
               address: secretjs.address,
               //@ts-ignore
-              coins: "2uscrt",
+              coins: `2${denom}`,
             },
           ],
           outputs: [
             {
-              address: "secret1example",
+              address: `${prefix}1example`,
               //@ts-ignore
-              coins: "1uscrt",
+              coins: `1${denom}`,
             },
             {
-              address: "secret1example",
+              address: `${prefix}1example`,
               //@ts-ignore
-              coins: "1uscrt",
+              coins: `1${denom}`,
             },
           ],
         };
@@ -460,7 +491,9 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgSetWithdrawAddressParams
+      old: MsgSetWithdrawAddressParams,
+      prefix: string,
+      denom: string
     ): MsgSetWithdrawAddressParams => {
       if (old) {
         old.delegator_address = secretjs.address;
@@ -468,7 +501,7 @@ export const messages: {
       } else {
         return {
           delegator_address: secretjs.address,
-          withdraw_address: "secret1example",
+          withdraw_address: `${prefix}1example`,
         };
       }
     },
@@ -494,7 +527,9 @@ export const messages: {
     module: "staking",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgUndelegateParams
+      old: MsgUndelegateParams,
+      prefix: string,
+      denom: string
     ): MsgUndelegateParams => {
       if (old) {
         old.delegator_address = secretjs.address;
@@ -502,9 +537,9 @@ export const messages: {
       } else {
         return {
           delegator_address: secretjs.address,
-          validator_address: "secretvaloper1example",
+          validator_address: `${prefix}valoper1example`,
           //@ts-ignore
-          amount: "1uscrt",
+          amount: `1${denom}`,
         };
       }
     },
@@ -518,17 +553,21 @@ export const messages: {
     module: "slashing",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgUnjailParams
+      old: MsgUnjailParams,
+      prefix: string,
+      denom: string
     ): MsgUnjailParams => {
       if (old) {
         old.validator_addr = selfDelegatorAddressToValidatorAddress(
-          secretjs.address
+          secretjs.address,
+          prefix
         );
         return old;
       } else {
         return {
           validator_addr: selfDelegatorAddressToValidatorAddress(
-            secretjs.address
+            secretjs.address,
+            prefix
           ),
         };
       }
@@ -635,14 +674,16 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgWithdrawDelegatorRewardParams
+      old: MsgWithdrawDelegatorRewardParams,
+      prefix: string,
+      denom: string
     ): MsgWithdrawDelegatorRewardParams => {
       if (old) {
         return Object.assign({}, old, { delegator_address: secretjs.address });
       } else {
         return {
           delegator_address: secretjs.address,
-          validator_address: "secret1example",
+          validator_address: `${prefix}1example`,
         };
       }
     },
@@ -654,17 +695,21 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgWithdrawValidatorCommissionParams
+      old: MsgWithdrawValidatorCommissionParams,
+      prefix: string,
+      denom: string
     ): MsgWithdrawValidatorCommissionParams => {
       if (old) {
         old.validator_address = selfDelegatorAddressToValidatorAddress(
-          secretjs.address
+          secretjs.address,
+          prefix
         );
         return old;
       } else {
         return {
           validator_address: selfDelegatorAddressToValidatorAddress(
-            secretjs.address
+            secretjs.address,
+            prefix
           ),
         };
       }
@@ -679,125 +724,155 @@ export const balanceFormat = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 6,
 }).format;
 
-async function bankRelevantInfo(secretjs: SecretNetworkClient): Promise<any> {
-  const { balances } = await secretjs.query.bank.allBalances({
-    address: secretjs.address,
-  });
+async function bankRelevantInfo(
+  secretjs: SecretNetworkClient,
+  prefix: string,
+  denom: string
+): Promise<any> {
+  try {
+    const { balances } = await secretjs.query.bank.allBalances({
+      address: secretjs.address,
+    });
 
-  let result = balances
-    ?.sort((a, b) => (a.denom === "uscrt" ? -1 : 1))
-    .map((c) => (
-      <tr key={`${c.amount}${c.denom}`}>
-        <td>{c.amount}</td>
-        <td>{c.denom}</td>
-        <td>
-          {c.denom === "uscrt"
-            ? `${balanceFormat(Number(c.amount) / 1e6)} SCRT`
-            : ""}
-        </td>
-      </tr>
-    ));
+    let result = balances
+      ?.sort((a, b) => (a.denom?.startsWith("ibc/") ? 1 : -1))
+      .map((c) => (
+        <tr key={`${c.amount}${c.denom}`}>
+          <td>{c.amount}</td>
+          <td>{c.denom}</td>
+          <td>
+            {c.denom === denom
+              ? `${balanceFormat(Number(c.amount) / 1e6)} ${humanizeDenom(
+                  denom
+                )}`
+              : ""}
+          </td>
+        </tr>
+      ));
 
-  if (result) {
-    if (balances?.length === 0) {
-      return "No balance";
+    if (result) {
+      if (balances?.length === 0) {
+        return "No balance";
+      } else {
+        return (
+          <table>
+            <thead>
+              <tr>
+                <th>Balance</th>
+                <th>Denom</th>
+                <th>Pretty</th>
+              </tr>
+            </thead>
+            <tbody>{result}</tbody>
+          </table>
+        );
+      }
     } else {
-      return (
-        <table>
-          <thead>
-            <tr>
-              <th>Balance</th>
-              <th>Denom</th>
-              <th>Pretty</th>
-            </tr>
-          </thead>
-          <tbody>{result}</tbody>
-        </table>
-      );
+      return "No balance";
     }
-  } else {
-    return "No balance";
+  } catch (error) {
+    if (error instanceof Error) {
+      return error.message;
+    } else {
+      return JSON.stringify(error);
+    }
   }
 }
 
 async function stakingRelevantInfo(
-  secretjs: SecretNetworkClient
+  secretjs: SecretNetworkClient,
+  prefix: string,
+  denom: string
 ): Promise<any> {
-  const { balance } = await secretjs.query.bank.balance({
-    address: secretjs.address,
-    denom: "uscrt",
-  });
-
-  const { delegation_responses } =
-    await secretjs.query.staking.delegatorDelegations({
-      delegator_addr: secretjs.address,
+  try {
+    const { balance } = await secretjs.query.bank.balance({
+      address: secretjs.address,
+      denom,
     });
 
-  const pendingRewards: { [validator: string]: string } = {};
-  for (const d of delegation_responses || []) {
-    const validator = d.delegation?.validator_address!;
-    const { rewards } = await secretjs.query.distribution.delegationRewards({
-      delegator_address: secretjs.address,
-      validator_address: validator,
-    });
+    const { delegation_responses } =
+      await secretjs.query.staking.delegatorDelegations({
+        delegator_addr: secretjs.address,
+      });
 
-    pendingRewards[validator] =
-      rewards
-        ?.map(
-          (r) =>
-            `${Math.floor(Number(r.amount))}${r.denom} (${balanceFormat(
-              Math.floor(Number(r.amount)) / 1e6
-            )} SCRT)`
-        )
-        .join(",") || "";
-  }
+    const pendingRewards: { [validator: string]: string } = {};
+    for (const d of delegation_responses || []) {
+      const validator = d.delegation?.validator_address!;
+      const { rewards } = await secretjs.query.distribution.delegationRewards({
+        delegator_address: secretjs.address,
+        validator_address: validator,
+      });
 
-  const validators: { [validator: string]: string } = {};
-  for (const validator_addr of Object.keys(pendingRewards)) {
-    const { validator } = await secretjs.query.staking.validator({
-      validator_addr,
-    });
+      pendingRewards[validator] =
+        rewards
+          ?.map(
+            (r) =>
+              `${Math.floor(Number(r.amount))}${r.denom} (${balanceFormat(
+                Math.floor(Number(r.amount)) / 1e6
+              )} ${humanizeDenom(denom)})`
+          )
+          .join(",") || "";
+    }
 
-    validators[validator_addr] = validator!.description!.moniker!;
-  }
+    const validators: { [validator: string]: string } = {};
+    for (const validator_addr of Object.keys(pendingRewards)) {
+      const { validator } = await secretjs.query.staking.validator({
+        validator_addr,
+      });
 
-  const delegations = delegation_responses?.map((d) => {
-    return (
-      <tr key={`${d.delegation?.validator_address}`}>
-        <td>{`${d.balance?.amount}${d.balance?.denom}`}</td>
-        <td>
-          {d.delegation?.validator_address} (
-          {validators[d.delegation?.validator_address!]})
-        </td>
-        <td>{pendingRewards[d.delegation?.validator_address!]}</td>
-      </tr>
-    );
-  });
+      validators[validator_addr] = validator!.description!.moniker!;
+    }
 
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>
-            Balance:{" "}
-            {`${balance?.amount || 0}${
-              balance?.denom || "uscrt"
-            } (${balanceFormat(Number(balance?.amount || 0) / 1e6)} SCRT)`}
-          </th>
+    const delegations = delegation_responses?.map((d) => {
+      return (
+        <tr key={`${d.delegation?.validator_address}`}>
+          <td>{`${d.balance?.amount}${d.balance?.denom}`}</td>
+          <td>
+            {d.delegation?.validator_address} (
+            {validators[d.delegation?.validator_address!]})
+          </td>
+          <td>{pendingRewards[d.delegation?.validator_address!]}</td>
         </tr>
-        {delegations?.length !== 0 ? (
+      );
+    });
+
+    return (
+      <table>
+        <thead>
           <tr>
-            <th>Delegation</th>
-            <th>Validator</th>
-            <th>Pending Rewards</th>
+            <th>
+              Balance:{" "}
+              {`${balance?.amount || 0}${
+                balance?.denom || prefix
+              } (${balanceFormat(
+                Number(balance?.amount || 0) / 1e6
+              )} ${humanizeDenom(denom)})`}
+            </th>
           </tr>
-        ) : (
-          <tr>
-            <th>No delegations</th>
-          </tr>
-        )}
-      </thead>
-      <tbody>{delegations}</tbody>
-    </table>
-  );
+          {delegations?.length !== 0 ? (
+            <tr>
+              <th>Delegation</th>
+              <th>Validator</th>
+              <th>Pending Rewards</th>
+            </tr>
+          ) : (
+            <tr>
+              <th>No delegations</th>
+            </tr>
+          )}
+        </thead>
+        <tbody>{delegations}</tbody>
+      </table>
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      return error.message;
+    } else {
+      return JSON.stringify(error);
+    }
+  }
+}
+
+function humanizeDenom(denom: string): string {
+  return denom.toUpperCase().slice(1);
 }

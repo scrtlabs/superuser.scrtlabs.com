@@ -1,4 +1,8 @@
 import useUrlState from "@ahooksjs/use-url-state";
+import CircleIcon from "@mui/icons-material/Circle";
+import ErrorIcon from "@mui/icons-material/Error";
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
 import {
   Button,
   Chip,
@@ -10,29 +14,34 @@ import {
   DialogTitle,
   Divider,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import CircleIcon from "@mui/icons-material/Circle";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import { Route, Routes } from "react-router";
 import { BrowserRouter } from "react-router-dom";
-import { BreakpointProvider } from "react-socks";
+import { Breakpoint, BreakpointProvider } from "react-socks";
 import { SecretNetworkClient } from "secretjs";
+import { explorerTxFromChainId } from "./explorers";
 import "./index.css";
-import { balanceFormat, messages as Msgs } from "./Msgs";
 import MsgEditor from "./MsgEditor";
+import { balanceFormat, messages as Msgs } from "./Msgs";
 import { setupKeplr, WalletPanel } from "./WalletStuff";
-import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
-import ViewInArIcon from "@mui/icons-material/ViewInAr";
-import ErrorIcon from "@mui/icons-material/Error";
 
 ReactDOM.render(
   <BreakpointProvider>
     <React.StrictMode>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<App />} />
+          <Route
+            path="/"
+            element={
+              <Typography>
+                <App />
+              </Typography>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </React.StrictMode>
@@ -53,6 +62,8 @@ export default function App() {
   const [nodeStatus, setNodeStatus] = useState<JSX.Element | string>("");
   const [apiUrl, setApiUrl] = useState<string>("https://lcd.secret.express");
   const [chainId, setChainId] = useState<string>("secret-4");
+  const [prefix, setPrefix] = useState<string>("secret");
+  const [denom, setDenom] = useState<string>("uscrt");
 
   const [state, setState] = useUrlState<State>(
     {
@@ -69,7 +80,7 @@ export default function App() {
   );
 
   const refreshNodeStatus = async (
-    secretjs: SecretNetworkClient,
+    querySecretjs: SecretNetworkClient,
     showLoading: boolean
   ) => {
     try {
@@ -83,10 +94,33 @@ export default function App() {
         );
       }
 
-      const { block } = await secretjs.query.tendermint.getLatestBlock({});
-      const { minimum_gas_price } = await secretjs.query.node.config({});
+      const { block } = await querySecretjs.query.tendermint.getLatestBlock({});
+      let minimum_gas_price: string | undefined;
+      try {
+        ({ minimum_gas_price } = await querySecretjs.query.node.config({}));
+      } catch (error) {
+        // Bug on must chains - this endpoint isn't connected
+      }
+      const { params } = await querySecretjs.query.staking.params({});
+
+      setDenom(params!.bond_denom!);
 
       const chainId = block?.header?.chain_id!;
+      const blockHeight = balanceFormat(Number(block?.header?.height));
+
+      let gasPrice: string | undefined;
+      if (minimum_gas_price) {
+        gasPrice = minimum_gas_price.replace(/0*([a-z]+)$/, "$1");
+      }
+
+      const blockTimeAgo = Math.floor(
+        (Date.now() - Date.parse(block?.header?.time as string)) / 1000
+      );
+      let blockTimeAgoString = `${blockTimeAgo}s ago`;
+      if (blockTimeAgo <= 0) {
+        blockTimeAgoString = "now";
+      }
+
       setChainId(chainId);
 
       if (secretjs) {
@@ -101,46 +135,56 @@ export default function App() {
               display: "flex",
               placeItems: "center",
               gap: "0.3rem",
-              minWidth: "10em",
             }}
           >
             <img src="/scrt.svg" style={{ width: "1.5em", borderRadius: 10 }} />
             <span>
-              <strong>Chain:</strong> {chainId}
+              <Breakpoint large up>
+                <strong>Chain:</strong> {chainId}
+              </Breakpoint>
+              <Breakpoint medium down>
+                {chainId}
+              </Breakpoint>
             </span>
           </span>
-          <span
-            style={{
-              display: "flex",
-              placeItems: "center",
-              gap: "0.3rem",
-              minWidth: "15em",
-            }}
-          >
-            <ViewInArIcon />
-            <span>
-              <strong>Block:</strong>{" "}
-              {balanceFormat(Number(block?.header?.height))} (
-              {Math.floor(
-                (Date.now() - Date.parse(block?.header?.time as string)) / 1000
-              )}
-              s ago)
+          <Tooltip title={blockTimeAgoString} placement="top">
+            <span
+              style={{
+                display: "flex",
+                placeItems: "center",
+                gap: "0.3rem",
+              }}
+            >
+              <ViewInArIcon />
+              <>
+                <Breakpoint large up>
+                  <strong>Block:</strong> {blockHeight}
+                </Breakpoint>
+                <Breakpoint medium down>
+                  {blockHeight}
+                </Breakpoint>
+              </>
             </span>
-          </span>
-          <span
-            style={{
-              display: "flex",
-              placeItems: "center",
-              gap: "0.3rem",
-              minWidth: "10em",
-            }}
-          >
-            <LocalGasStationIcon />
-            <span>
-              <strong>Gas price:</strong>{" "}
-              {minimum_gas_price!.replace(/0*uscrt/, "uscrt")}
+          </Tooltip>
+          {gasPrice && (
+            <span
+              style={{
+                display: "flex",
+                placeItems: "center",
+                gap: "0.3rem",
+              }}
+            >
+              <LocalGasStationIcon />
+              <span>
+                <Breakpoint large up>
+                  <strong>Gas price:</strong> {gasPrice}
+                </Breakpoint>
+                <Breakpoint medium down>
+                  {gasPrice}
+                </Breakpoint>
+              </span>
             </span>
-          </span>
+          )}
         </div>
       );
     } catch (error) {
@@ -173,7 +217,7 @@ export default function App() {
 
         return apiUrl;
       });
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -192,6 +236,8 @@ export default function App() {
       return;
     }
 
+    setPrefix(secretjs.address.replace(/^([a-z]+)1.*$/, "$1"));
+
     Object.keys(state).forEach((msgIndex) => {
       if (!Msgs[state[msgIndex][0]]?.example) {
         return;
@@ -203,7 +249,9 @@ export default function App() {
           JSON.stringify(
             Msgs[state[msgIndex][0]].example(
               secretjs,
-              JSON.parse(state[msgIndex][1])
+              JSON.parse(state[msgIndex][1]),
+              prefix,
+              denom
             ),
             null,
             2
@@ -289,17 +337,19 @@ export default function App() {
               />
               <Typography>{nodeStatus}</Typography>
             </div>
-            <div style={{ width: "95%" /* , maxWidth: "45rem" */ }}>
+            <div style={{ width: "95%" }}>
               {Object.keys(state).map((msgIndex) => {
                 return (
                   <span key={`${msgIndex}`}>
                     <Divider>
-                      <Chip variant="outlined" label={`#${msgIndex}`} />
+                      <Chip variant="outlined" label={`Message #${msgIndex}`} />
                     </Divider>
                     <MsgEditor
                       secretjs={secretjs!}
                       msgType={state[msgIndex][0]}
                       msgInput={state[msgIndex][1]}
+                      denom={denom}
+                      prefix={prefix}
                       setMsgInput={(input: string) => {
                         setState((state) => ({
                           [msgIndex]: [
@@ -309,7 +359,9 @@ export default function App() {
                               : JSON.stringify(
                                   Msgs[state[msgIndex][0]]?.example(
                                     secretjs,
-                                    null
+                                    null,
+                                    prefix,
+                                    denom
                                   ),
                                   null,
                                   2
@@ -323,7 +375,12 @@ export default function App() {
                             type,
                             type !== state[msgIndex][0]
                               ? JSON.stringify(
-                                  Msgs[type]?.example(secretjs, null),
+                                  Msgs[type]?.example(
+                                    secretjs,
+                                    null,
+                                    prefix,
+                                    denom
+                                  ),
                                   null,
                                   2
                                 ) || ""
@@ -381,7 +438,11 @@ export default function App() {
                   try {
                     const tx = await secretjs.tx.broadcast(
                       Object.values(state).map(([type, input]) => {
-                        return Msgs[type].converter(JSON.parse(input));
+                        return Msgs[type].converter(
+                          JSON.parse(input),
+                          prefix,
+                          denom
+                        );
                       }),
                       {
                         gasLimit: 150_000,
@@ -405,7 +466,7 @@ export default function App() {
                             }}
                           >
                             <a
-                              href={`https://www.mintscan.io/secret/txs/${tx.transactionHash}`}
+                              href={`${explorerTxFromChainId[chainId]}/${tx.transactionHash}`}
                               target="_blank"
                               style={{ textDecoration: "none" }}
                             >
@@ -443,7 +504,7 @@ export default function App() {
                         }}
                       >
                         <a
-                          href={`https://www.mintscan.io/secret/txs/${txDialogSuccess}`}
+                          href={`${explorerTxFromChainId[chainId]}/${txDialogSuccess}`}
                           target="_blank"
                           style={{ textDecoration: "none" }}
                         >
