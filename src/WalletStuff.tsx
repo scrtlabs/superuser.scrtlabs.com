@@ -92,8 +92,6 @@ export function WalletButton({
 
   useEffect(() => {
     function localStorageEventHandler() {
-      console.log("here");
-
       const walletName = localStorage.getItem(LOCALSTORAGE_KEY);
       if (walletName) {
         setConnectedWallet(walletName);
@@ -186,7 +184,7 @@ export function WalletButton({
         >
           {content}
         </Button>
-        <Dialog open={isDialogOpen}>
+        <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
           <DialogTitle>Connect a wallet</DialogTitle>
 
           <DialogContent>
