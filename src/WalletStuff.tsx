@@ -40,7 +40,7 @@ export function WalletButton({
       <Breakpoint medium up style={{ display: "flex" }}>
         <img src="/keplr.svg" style={{ width: "1.8rem", borderRadius: 10 }} />
       </Breakpoint>
-      <span style={{ marginRight: "0.3rem" }}>
+      <span style={{ margin: "0 0.3rem" }}>
         <If condition={walletAddress.length > 0}>
           <Then>
             <Breakpoint small down>{`${walletAddress.slice(
