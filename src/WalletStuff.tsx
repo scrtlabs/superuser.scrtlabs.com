@@ -34,12 +34,12 @@ export function WalletButton({
 
   const content = (
     <div style={{ display: "flex", placeItems: "center", borderRadius: 10 }}>
-      {/* <Breakpoint small down style={{ display: "flex" }}>
+      <Breakpoint small down style={{ display: "flex" }}>
         <img src="/fina.webp" style={{ width: "1.8rem", borderRadius: 10 }} />
       </Breakpoint>
       <Breakpoint medium up style={{ display: "flex" }}>
         <img src="/keplr.svg" style={{ width: "1.8rem", borderRadius: 10 }} />
-      </Breakpoint> */}
+      </Breakpoint>
       <span style={{ marginRight: "0.3rem" }}>
         <If condition={walletAddress.length > 0}>
           <Then>
