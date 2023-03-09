@@ -15,18 +15,18 @@ window.addEventListener("keplr_keystorechange", () => {
   location.reload();
 });
 
-export function WalletPanel({
+export function WalletButton({
   secretjs,
   setSecretjs,
-  secretAddress,
-  setSecretAddress,
+  walletAddress,
+  setWalletAddress,
   url,
   chainId,
 }: {
   secretjs: SecretNetworkClient | null;
   setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>;
-  secretAddress: string;
-  setSecretAddress: React.Dispatch<React.SetStateAction<string>>;
+  walletAddress: string;
+  setWalletAddress: React.Dispatch<React.SetStateAction<string>>;
   url: string;
   chainId: string;
 }) {
@@ -34,21 +34,21 @@ export function WalletPanel({
 
   const content = (
     <div style={{ display: "flex", placeItems: "center", borderRadius: 10 }}>
-      <Breakpoint small down style={{ display: "flex" }}>
+      {/* <Breakpoint small down style={{ display: "flex" }}>
         <img src="/fina.webp" style={{ width: "1.8rem", borderRadius: 10 }} />
       </Breakpoint>
       <Breakpoint medium up style={{ display: "flex" }}>
         <img src="/keplr.svg" style={{ width: "1.8rem", borderRadius: 10 }} />
-      </Breakpoint>
-      <span style={{ margin: "0 0.3rem" }}>
-        <If condition={secretAddress.length > 0}>
+      </Breakpoint> */}
+      <span style={{ marginRight: "0.3rem" }}>
+        <If condition={walletAddress.length > 0}>
           <Then>
-            <Breakpoint small down>{`${secretAddress.slice(
+            <Breakpoint small down>{`${walletAddress.slice(
               0,
               6
-            )}...${secretAddress.slice(-4)}`}</Breakpoint>
+            )}...${walletAddress.slice(-4)}`}</Breakpoint>
             <Breakpoint medium up>
-              {secretAddress}
+              {walletAddress}
             </Breakpoint>
           </Then>
           <Else>
@@ -67,7 +67,7 @@ export function WalletPanel({
   if (secretjs) {
     return (
       <CopyToClipboard
-        text={secretAddress}
+        text={walletAddress}
         onCopy={() => {
           setIsCopied(true);
           setTimeout(() => setIsCopied(false), 3000);
@@ -92,14 +92,14 @@ export function WalletPanel({
   } else {
     try {
       // superusers don't click around
-      setupKeplr(setSecretjs, setSecretAddress, url, chainId);
+      setupKeplr(setSecretjs, setWalletAddress, url, chainId);
     } catch (error) {}
     return (
       <Button
         id="keplr-button"
         variant="contained"
         style={{ background: "white", color: "black" }}
-        onClick={() => setupKeplr(setSecretjs, setSecretAddress, url, chainId)}
+        onClick={() => setupKeplr(setSecretjs, setWalletAddress, url, chainId)}
       >
         {content}
       </Button>
@@ -109,7 +109,7 @@ export function WalletPanel({
 
 export async function setupKeplr(
   setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>,
-  setSecretAddress: React.Dispatch<React.SetStateAction<string>>,
+  setWalletAddress: React.Dispatch<React.SetStateAction<string>>,
   url: string,
   chainId: string
 ) {
@@ -129,16 +129,16 @@ export async function setupKeplr(
   const keplrOfflineSigner = window.getOfflineSignerOnlyAmino(chainId);
   const accounts = await keplrOfflineSigner.getAccounts();
 
-  const secretAddress = accounts[0].address;
+  const walletAddress = accounts[0].address;
 
   const secretjs = new SecretNetworkClient({
     url,
     chainId: chainId,
     wallet: keplrOfflineSigner,
-    walletAddress: secretAddress,
+    walletAddress: walletAddress,
     encryptionUtils: window.getEnigmaUtils(chainId),
   });
 
-  setSecretAddress(secretAddress);
+  setWalletAddress(walletAddress);
   setSecretjs(secretjs);
 }

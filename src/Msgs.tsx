@@ -2,6 +2,7 @@ import React from "react";
 import {
   coinFromString,
   coinsFromString,
+  ibcDenom,
   MsgBeginRedelegate,
   MsgBeginRedelegateParams,
   MsgCreateValidator,
@@ -734,6 +735,38 @@ async function bankRelevantInfo(
       address: secretjs.address,
     });
 
+    const { denom_traces } = await secretjs.query.ibc_transfer.denomTraces({
+      pagination: {
+        limit: "10000",
+      },
+    });
+
+    const ibcDenomToBaseDenom: { [ibcDenom: string]: string } = Object.assign(
+      {},
+      ...denom_traces!.map(({ path, base_denom }) => {
+        const split = path!.split("/");
+        const paths: {
+          incomingPortId: string;
+          incomingChannelId: string;
+        }[] = [];
+        for (let i = 0; i < split.length; i += 2) {
+          paths.push({
+            incomingPortId: split[i],
+            incomingChannelId: split[i + 1],
+          });
+        }
+
+        debugger;
+        return {
+          [ibcDenom(paths, base_denom!)]: `${base_denom!}${
+            paths.length > 1 ? " (non-direct)" : ""
+          }`,
+        };
+      })
+    );
+
+    console.log(JSON.stringify(ibcDenomToBaseDenom, null, 2));
+
     let result = balances
       ?.sort((a, b) => (a.denom?.startsWith("ibc/") ? 1 : -1))
       .map((c) => (
@@ -742,9 +775,21 @@ async function bankRelevantInfo(
           <td>{c.denom}</td>
           <td>
             {c.denom === denom
-              ? `${balanceFormat(Number(c.amount) / 1e6)} ${humanizeDenom(
-                  denom
-                )}`
+              ? `${(() => {
+                  const { humanDenom, decimals } = humanizeDenom(denom);
+                  return `${balanceFormat(
+                    Number(c.amount) / Number(`1e${decimals}`)
+                  )} ${humanDenom}`;
+                })()}`
+              : ibcDenomToBaseDenom[c.denom!]
+              ? (() => {
+                  const { humanDenom, decimals } = humanizeDenom(
+                    ibcDenomToBaseDenom[c.denom!]
+                  );
+                  return `${balanceFormat(
+                    Number(c.amount) / Number(`1e${decimals}`)
+                  )} ${humanDenom}`;
+                })()
               : ""}
           </td>
         </tr>
@@ -807,9 +852,12 @@ async function stakingRelevantInfo(
         rewards
           ?.map(
             (r) =>
-              `${Math.floor(Number(r.amount))}${r.denom} (${balanceFormat(
-                Math.floor(Number(r.amount)) / 1e6
-              )} ${humanizeDenom(denom)})`
+              `${Math.floor(Number(r.amount))}${r.denom} (${(() => {
+                const { humanDenom, decimals } = humanizeDenom(denom);
+                return `${balanceFormat(
+                  Math.floor(Number(r.amount)) / Number(`1e${decimals}`)
+                )} ${humanDenom}`;
+              })()})`
           )
           .join(",") || "";
     }
@@ -842,11 +890,12 @@ async function stakingRelevantInfo(
           <tr>
             <th>
               Balance:{" "}
-              {`${balance?.amount || 0}${
-                balance?.denom || prefix
-              } (${balanceFormat(
-                Number(balance?.amount || 0) / 1e6
-              )} ${humanizeDenom(denom)})`}
+              {`${balance?.amount || 0}${balance?.denom || prefix} (${(() => {
+                const { humanDenom, decimals } = humanizeDenom(denom);
+                return `${balanceFormat(
+                  Number(balance?.amount) / Number(`1e${decimals}`)
+                )} ${humanDenom}`;
+              })()})`}
             </th>
           </tr>
           {delegations?.length !== 0 ? (
@@ -873,6 +922,43 @@ async function stakingRelevantInfo(
   }
 }
 
-function humanizeDenom(denom: string): string {
-  return denom.toUpperCase().slice(1);
+function humanizeDenom(baseDenom: string): {
+  humanDenom: string;
+  decimals: number;
+} {
+  const nonDirect = baseDenom.toLocaleLowerCase().includes("non-direct");
+  const strippedBaseDenom = baseDenom.replace(/ \(non-direct\)/i, "");
+
+  let humanDenom: string | undefined;
+  let decimals = 6;
+
+  switch (strippedBaseDenom) {
+    case "inj":
+      humanDenom = "INJ";
+      decimals = 18;
+      break;
+    case "uusd":
+      humanDenom = "UST";
+      break;
+    case "rowan":
+      humanDenom = "ROWAN";
+      decimals = 18;
+      break;
+    case "aevmos":
+      humanDenom = "EVMOS";
+      decimals = 18;
+      break;
+    default:
+      break;
+  }
+
+  if (!humanDenom) {
+    humanDenom = baseDenom.toUpperCase().slice(1);
+  }
+
+  if (nonDirect) {
+    humanDenom += " (non-direct)";
+  }
+
+  return { humanDenom, decimals };
 }

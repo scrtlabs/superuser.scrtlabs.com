@@ -27,7 +27,7 @@ import { explorerTxFromChainId } from "./explorers";
 import "./index.css";
 import MsgEditor from "./MsgEditor";
 import { balanceFormat, messages as Msgs } from "./Msgs";
-import { setupKeplr, WalletPanel } from "./WalletStuff";
+import { setupKeplr, WalletButton } from "./WalletStuff";
 
 ReactDOM.render(
   <BreakpointProvider>
@@ -55,7 +55,7 @@ type State = {
 
 export default function App() {
   const [secretjs, setSecretjs] = useState<SecretNetworkClient | null>(null);
-  const [secretAddress, setSecretAddress] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState<string>("");
   const [isTxDialogOpen, setIsTxDialogOpen] = useState<boolean>(false);
   const [txDialogError, setTxDialogError] = useState<JSX.Element | null>(null);
   const [txDialogSuccess, setTxDialogSuccess] = useState<any>(null);
@@ -124,7 +124,7 @@ export default function App() {
       setChainId(chainId);
 
       if (secretjs) {
-        setupKeplr(setSecretjs, setSecretAddress, apiUrl, chainId);
+        setupKeplr(setSecretjs, setWalletAddress, apiUrl, chainId);
       }
 
       setNodeStatus(
@@ -272,11 +272,11 @@ export default function App() {
           gap: "0.5rem",
         }}
       >
-        <WalletPanel
+        <WalletButton
           secretjs={secretjs}
           setSecretjs={setSecretjs}
-          secretAddress={secretAddress}
-          setSecretAddress={setSecretAddress}
+          walletAddress={walletAddress}
+          setWalletAddress={setWalletAddress}
           url={apiUrl}
           chainId={chainId}
         />
@@ -422,7 +422,7 @@ export default function App() {
             </div>
             <div style={{ marginTop: "1rem" }}>
               <Button
-                disabled={secretAddress === "" || !secretjs}
+                disabled={walletAddress === "" || !secretjs}
                 variant="contained"
                 sx={{
                   padding: "0.5em 0",
