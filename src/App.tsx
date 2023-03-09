@@ -27,7 +27,7 @@ import { explorerTxFromChainId } from "./explorers";
 import "./index.css";
 import MsgEditor from "./MsgEditor";
 import { balanceFormat, messages as Msgs } from "./Msgs";
-import { setupKeplr, WalletButton } from "./WalletStuff";
+import { reconnectWallet, WalletButton } from "./WalletStuff";
 
 ReactDOM.render(
   <BreakpointProvider>
@@ -79,6 +79,13 @@ export default function App() {
     }
   );
 
+  useEffect(() => {
+    // superusers don't click around
+    reconnectWallet(setSecretjs, setWalletAddress, apiUrl, chainId).catch(
+      (error) => {}
+    );
+  }, []);
+
   const refreshNodeStatus = async (
     querySecretjs: SecretNetworkClient,
     showLoading: boolean
@@ -124,7 +131,7 @@ export default function App() {
       setChainId(chainId);
 
       if (secretjs) {
-        setupKeplr(setSecretjs, setWalletAddress, apiUrl, chainId);
+        reconnectWallet(setSecretjs, setWalletAddress, apiUrl, chainId);
       }
 
       setNodeStatus(

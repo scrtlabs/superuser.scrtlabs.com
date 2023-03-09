@@ -756,7 +756,6 @@ async function bankRelevantInfo(
           });
         }
 
-        debugger;
         return {
           [ibcDenom(paths, base_denom!)]: `${base_denom!}${
             paths.length > 1 ? " (non-direct)" : ""
