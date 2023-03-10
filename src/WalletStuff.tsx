@@ -254,9 +254,13 @@ function getWalletsButtons(
             minHeight: "3rem",
           }}
           onClick={() => {
-            localStorage.setItem(LOCALSTORAGE_KEY, wallet.name);
-            window.dispatchEvent(new Event("storage"));
-            wallet.connect(setSecretjs, setWalletAddress, url, chainId);
+            try {
+              wallet.connect(setSecretjs, setWalletAddress, url, chainId);
+              localStorage.setItem(LOCALSTORAGE_KEY, wallet.name);
+              window.dispatchEvent(new Event("storage"));
+            } catch (error) {
+              console.log("wallet connect error", JSON.stringify(error));
+            }
           }}
         >
           <div
