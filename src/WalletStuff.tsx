@@ -46,7 +46,7 @@ const wallets: Wallet[] = [
     img: "/fina.webp",
     isDesktop: false,
     isMobile: true,
-    connect: connectKeplr,
+    connect: connectFina,
   },
   {
     name: "StarShell",
@@ -308,20 +308,9 @@ async function connectKeplr(
   url: string,
   chainId: string
 ) {
-  const sleep = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  await window.keplr!.enable(chainId);
 
-  while (
-    !window.keplr ||
-    !window.keplr.getEnigmaUtils ||
-    !window.keplr.getOfflineSignerOnlyAmino
-  ) {
-    await sleep(50);
-  }
-
-  await window.keplr.enable(chainId);
-
-  const wallet = window.keplr.getOfflineSignerOnlyAmino(chainId);
+  const wallet = window.keplr!.getOfflineSignerOnlyAmino(chainId);
   const [{ address: walletAddress }] = await wallet.getAccounts();
 
   const secretjs = new SecretNetworkClient({
@@ -329,11 +318,28 @@ async function connectKeplr(
     chainId,
     wallet,
     walletAddress: walletAddress,
-    encryptionUtils: window.keplr.getEnigmaUtils(chainId),
+    encryptionUtils: window.keplr!.getEnigmaUtils(chainId),
   });
 
   setWalletAddress(walletAddress);
   setSecretjs(secretjs);
+}
+
+async function connectFina(
+  setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>,
+  setWalletAddress: React.Dispatch<React.SetStateAction<string>>,
+  url: string,
+  chainId: string
+) {
+  if (!window.keplr) {
+    const urlSearchParams = new URLSearchParams();
+    urlSearchParams.append("network", chainId);
+    urlSearchParams.append("url", window.location.href);
+
+    window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
+  } else {
+    connectKeplr(setSecretjs, setWalletAddress, url, chainId);
+  }
 }
 
 async function connectLeap(
@@ -342,20 +348,6 @@ async function connectLeap(
   url: string,
   chainId: string
 ) {
-  const sleep = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-
-  while (
-    //@ts-ignore
-    !window.leap ||
-    //@ts-ignore
-    !window.leap.getEnigmaUtils ||
-    //@ts-ignore
-    !window.leap.getOfflineSignerOnlyAmino
-  ) {
-    await sleep(50);
-  }
-
   //@ts-ignore
   await window.leap.enable(chainId);
 
