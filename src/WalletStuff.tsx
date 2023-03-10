@@ -53,7 +53,7 @@ const wallets: Wallet[] = [
     img: "/starshell.svg",
     isDesktop: true,
     isMobile: false,
-    connect: connectKeplr,
+    connect: connectStarShell,
   },
   {
     name: "Leap",
@@ -256,8 +256,6 @@ function getWalletsButtons(
           onClick={() => {
             try {
               wallet.connect(setSecretjs, setWalletAddress, url, chainId);
-              localStorage.setItem(LOCALSTORAGE_KEY, wallet.name);
-              window.dispatchEvent(new Event("storage"));
             } catch (error) {
               console.log("wallet connect error", JSON.stringify(error));
             }
@@ -310,7 +308,8 @@ async function connectKeplr(
   setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>,
   setWalletAddress: React.Dispatch<React.SetStateAction<string>>,
   url: string,
-  chainId: string
+  chainId: string,
+  walletNameForLocalStorage: string = "Keplr"
 ) {
   await window.keplr!.enable(chainId);
 
@@ -327,6 +326,9 @@ async function connectKeplr(
 
   setWalletAddress(walletAddress);
   setSecretjs(secretjs);
+
+  localStorage.setItem(LOCALSTORAGE_KEY, walletNameForLocalStorage);
+  window.dispatchEvent(new Event("storage"));
 }
 
 async function connectFina(
@@ -341,11 +343,24 @@ async function connectFina(
     urlSearchParams.append("url", window.location.href);
 
     window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
-
-    // Need to throw to prevent setting the logo in localStorage
-    throw new Error(`Fina not detected, trying to open the in-app browser`);
   } else {
-    connectKeplr(setSecretjs, setWalletAddress, url, chainId);
+    connectKeplr(setSecretjs, setWalletAddress, url, chainId, "Fina");
+  }
+}
+
+async function connectStarShell(
+  setSecretjs: React.Dispatch<React.SetStateAction<SecretNetworkClient | null>>,
+  setWalletAddress: React.Dispatch<React.SetStateAction<string>>,
+  url: string,
+  chainId: string
+) {
+  if (!window.keplr) {
+    // const urlSearchParams = new URLSearchParams();
+    // urlSearchParams.append("network", chainId);
+    // urlSearchParams.append("url", window.location.href);
+    // window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
+  } else {
+    connectKeplr(setSecretjs, setWalletAddress, url, chainId, "StarShell");
   }
 }
 
@@ -373,6 +388,9 @@ async function connectLeap(
 
   setWalletAddress(walletAddress);
   setSecretjs(secretjs);
+
+  localStorage.setItem(LOCALSTORAGE_KEY, "Leap");
+  window.dispatchEvent(new Event("storage"));
 }
 
 async function connectMetamask(
@@ -407,4 +425,7 @@ async function connectMetamask(
 
   setWalletAddress(wallet.address);
   setSecretjs(secretjs);
+
+  localStorage.setItem(LOCALSTORAGE_KEY, "MetaMask");
+  window.dispatchEvent(new Event("storage"));
 }
