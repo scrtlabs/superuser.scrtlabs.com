@@ -255,6 +255,7 @@ function getWalletsButtons(
           }}
           onClick={() => {
             localStorage.setItem(LOCALSTORAGE_KEY, wallet.name);
+            window.dispatchEvent(new Event("storage"));
             wallet.connect(setSecretjs, setWalletAddress, url, chainId);
           }}
         >
