@@ -341,6 +341,9 @@ async function connectFina(
     urlSearchParams.append("url", window.location.href);
 
     window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
+
+    // Need to throw to prevent setting the logo in localStorage
+    throw new Error(`Fina not detected, trying to open the in-app browser`);
   } else {
     connectKeplr(setSecretjs, setWalletAddress, url, chainId);
   }
