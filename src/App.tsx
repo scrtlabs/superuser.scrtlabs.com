@@ -60,6 +60,7 @@ export default function App() {
   const [txDialogError, setTxDialogError] = useState<JSX.Element | null>(null);
   const [txDialogSuccess, setTxDialogSuccess] = useState<any>(null);
   const [nodeStatus, setNodeStatus] = useState<JSX.Element | string>("");
+  const [chainStatus, setChainStatus] = useState<JSX.Element | string>("");
   const [apiUrl, setApiUrl] = useState<string>("https://lcd.secret.express");
   const [chainId, setChainId] = useState<string>("secret-4");
   const [prefix, setPrefix] = useState<string>("secret");
@@ -93,8 +94,10 @@ export default function App() {
     try {
       if (showLoading) {
         setNodeStatus(
+          <CircleIcon color={"disabled"} sx={{ fontSize: "small" }} />
+        );
+        setChainStatus(
           <div style={{ display: "flex", placeItems: "center", gap: "0.5rem" }}>
-            <CircleIcon color={"disabled"} sx={{ fontSize: "small" }} />
             <CircularProgress size={"1em"} />
             <span>Loading...</span>
           </div>
@@ -135,8 +138,10 @@ export default function App() {
       }
 
       setNodeStatus(
+        <CircleIcon color={"success"} sx={{ fontSize: "small" }} />
+      );
+      setChainStatus(
         <div style={{ display: "flex", placeItems: "center", gap: "1rem" }}>
-          <CircleIcon color={"success"} sx={{ fontSize: "small" }} />
           <span
             style={{
               display: "flex",
@@ -202,9 +207,9 @@ export default function App() {
         errorMessage = JSON.stringify(error);
       }
 
-      setNodeStatus(
+      setNodeStatus(<CircleIcon color={"error"} sx={{ fontSize: "small" }} />);
+      setChainStatus(
         <div style={{ display: "flex", placeItems: "center", gap: "0.5rem" }}>
-          <CircleIcon color={"error"} sx={{ fontSize: "small" }} />
           <ErrorIcon />
           <span>Error: {errorMessage}</span>
         </div>
@@ -303,14 +308,12 @@ export default function App() {
           align="center"
           sx={{ marginTop: "0.5rem" }}
         >
-          Tx Builder
+          Super User
         </Typography>
         <Typography
           component="div"
           align="center"
-          sx={{
-            marginBottom: "0.5rem",
-          }}
+          sx={{ marginBottom: "1rem" }}
         >
           send complex transactions.
         </Typography>
@@ -324,7 +327,7 @@ export default function App() {
               flexDirection: "column",
               placeItems: "center",
               placeContent: "center",
-              gap: "0.3rem",
+              gap: "1rem",
             }}
           >
             <div
@@ -333,17 +336,34 @@ export default function App() {
                 width: "95%",
                 paddingLeft: "2rem",
                 gap: "0.5rem",
-                alignItems: "center",
+                placeItems: "center",
               }}
             >
-              <TextField
-                label="API"
-                variant="outlined"
-                value={apiUrl}
-                onChange={(e) => setApiUrl(e.target.value)}
-              />
-              <Typography>{nodeStatus}</Typography>
+              <Breakpoint small down>
+                <TextField
+                  label="API"
+                  variant="outlined"
+                  value={apiUrl}
+                  sx={{ width: "80vw" }}
+                  onChange={(e) => setApiUrl(e.target.value)}
+                />
+              </Breakpoint>
+              <Breakpoint medium up>
+                <TextField
+                  label="API"
+                  variant="outlined"
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
+                />
+              </Breakpoint>
+              {nodeStatus}
+              <Breakpoint medium up>
+                {chainStatus}
+              </Breakpoint>
             </div>
+            <Breakpoint small down>
+              {chainStatus}
+            </Breakpoint>
             <div style={{ width: "95%" }}>
               {Object.keys(state).map((msgIndex) => {
                 return (
