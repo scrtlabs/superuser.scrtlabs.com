@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { SecretNetworkClient } from "secretjs";
-import { messages, SupportedMessage } from "./Msgs";
+import { messages, SupportedMessage } from "./Messages";
 
 export default function MsgEditor({
   secretjs,
@@ -40,7 +40,13 @@ export default function MsgEditor({
       if (messages[msgType]?.relevantInfo) {
         setIsLoadingInfo(true);
         setRelevantInfo(
-          await messages[msgType].relevantInfo!(secretjs, prefix, denom)
+          await messages[msgType].relevantInfo!(
+            secretjs,
+            prefix,
+            denom,
+            msgInput,
+            setMsgInput
+          )
         );
         setIsLoadingInfo(false);
       } else {

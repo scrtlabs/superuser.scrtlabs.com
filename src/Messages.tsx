@@ -1,4 +1,6 @@
+import { Tooltip } from "@mui/material";
 import React from "react";
+import { Breakpoint } from "react-socks";
 import {
   coinFromString,
   coinsFromString,
@@ -97,7 +99,9 @@ export const messages: {
     relevantInfo?: (
       secretjs: SecretNetworkClient,
       prefix: string,
-      denom: string
+      denom: string,
+      msgInput: string,
+      setMsgInput: (input: string) => void
     ) => Promise<any>;
   };
 } = {
@@ -728,7 +732,9 @@ export const balanceFormat = new Intl.NumberFormat("en-US", {
 async function bankRelevantInfo(
   secretjs: SecretNetworkClient,
   prefix: string,
-  denom: string
+  denom: string,
+  msgInput: string,
+  setMsgInput: (input: string) => void
 ): Promise<any> {
   try {
     const { balances } = await secretjs.query.bank.allBalances({
@@ -768,9 +774,9 @@ async function bankRelevantInfo(
       ?.sort((a, b) => (a.denom?.startsWith("ibc/") ? 1 : -1))
       .map((c) => (
         <tr key={`${c.amount}${c.denom}`}>
-          <td>{c.amount}</td>
-          <td>{c.denom}</td>
-          <td>
+          <td style={{ overflowWrap: "break-word" }}>{c.amount}</td>
+          <td style={{ overflowWrap: "anywhere" }}>{c.denom}</td>
+          <td style={{ overflowWrap: "break-word" }}>
             {c.denom === denom
               ? `${(() => {
                   const { humanDenom, decimals } = humanizeDenom(denom);
@@ -824,7 +830,9 @@ async function bankRelevantInfo(
 async function stakingRelevantInfo(
   secretjs: SecretNetworkClient,
   prefix: string,
-  denom: string
+  denom: string,
+  msgInput: string,
+  setMsgInput: (input: string) => void
 ): Promise<any> {
   try {
     const { balance } = await secretjs.query.bank.balance({
@@ -871,12 +879,41 @@ async function stakingRelevantInfo(
     const delegations = delegation_responses?.map((d) => {
       return (
         <tr key={`${d.delegation?.validator_address}`}>
-          <td>{`${d.balance?.amount}${d.balance?.denom}`}</td>
-          <td>
-            {d.delegation?.validator_address} (
-            {validators[d.delegation?.validator_address!]})
+          <td
+            style={{ overflowWrap: "break-word" }}
+          >{`${d.balance?.amount}${d.balance?.denom}`}</td>
+          <Tooltip
+            title={`Click to use ${
+              validators[d.delegation?.validator_address!]
+            } in content`}
+            placement="top"
+          >
+            <td
+              style={{ cursor: "pointer", overflowWrap: "anywhere" }}
+              onClick={async () =>
+                setMsgInput(
+                  msgInput.replace(
+                    /secretvaloper1example/,
+                    d.delegation?.validator_address!
+                  )
+                )
+              }
+            >
+              <Breakpoint small down>
+                <u>
+                  {d.delegation?.validator_address} (
+                  {validators[d.delegation?.validator_address!]})
+                </u>
+              </Breakpoint>
+              <Breakpoint medium up>
+                {d.delegation?.validator_address} (
+                {validators[d.delegation?.validator_address!]})
+              </Breakpoint>
+            </td>
+          </Tooltip>
+          <td style={{ overflowWrap: "break-word" }}>
+            {pendingRewards[d.delegation?.validator_address!]}
           </td>
-          <td>{pendingRewards[d.delegation?.validator_address!]}</td>
         </tr>
       );
     });

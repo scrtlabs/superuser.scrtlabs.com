@@ -25,8 +25,8 @@ import { Breakpoint, BreakpointProvider } from "react-socks";
 import { SecretNetworkClient } from "secretjs";
 import { explorerTxFromChainId } from "./explorers";
 import "./index.css";
+import { balanceFormat, messages as Msgs } from "./Messages";
 import MsgEditor from "./MsgEditor";
-import { balanceFormat, messages as Msgs } from "./Msgs";
 import { reconnectWallet, WalletButton } from "./WalletStuff";
 
 ReactDOM.render(
