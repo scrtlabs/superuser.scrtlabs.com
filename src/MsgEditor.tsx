@@ -197,7 +197,11 @@ async function checkMsg(
   }
 
   try {
-    const sim = await secretjs.tx.simulate([msg], { gasLimit: 0 });
+    await secretjs.tx.simulate([msg], {
+      gasLimit: 0,
+      feeDenom: denom,
+    });
+
     return "";
   } catch (error) {
     //@ts-ignore
@@ -205,12 +209,10 @@ async function checkMsg(
 
     if (rawLog.includes("Enclave: failed to validate transaction")) {
       // enclave won't work in simulation mode
-      // this check will only flag app-level errors (so in x/compute only errors from out of the enclave)
+      // this check will only flag app-level errors (i.e. in x/compute only errors from out of the enclave)
       return "";
-    } else if (rawLog.includes("failed to execute message")) {
-      return rawLog;
     } else {
-      return "";
+      return rawLog;
     }
   }
 }

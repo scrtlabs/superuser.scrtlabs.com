@@ -764,8 +764,6 @@ async function bankRelevantInfo(
       })
     );
 
-    console.log(JSON.stringify(ibcDenomToBaseDenom, null, 2));
-
     let result = balances
       ?.sort((a, b) => (a.denom?.startsWith("ibc/") ? 1 : -1))
       .map((c) => (

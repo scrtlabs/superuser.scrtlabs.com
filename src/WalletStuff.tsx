@@ -418,7 +418,10 @@ async function connectMetamask(
   // @ts-ignore
   if (!window.ethereum && isMobile) {
     window.open(
-      `https://metamask.app.link/dapp/superuser.scrtlabs.com/?0[0]=MsgSend&0[1]=%7B%0A%20%20%22from_address%22%3A%20%22secret1e8fnfznmgm67nud2uf2lrcvuy40pcdhrerph7v%22%2C%0A%20%20%22to_address%22%3A%20%22secret1example%22%2C%0A%20%20%22amount%22%3A%20%221uscrt%22%0A%7D`,
+      `https://metamask.app.link/dapp/${window.location.href.replace(
+        /^https:\/\//,
+        ""
+      )}`,
       "_blank"
     );
   } else {
