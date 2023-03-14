@@ -37,7 +37,7 @@ ReactDOM.render(
           <Route
             path="/"
             element={
-              <Typography>
+              <Typography component="span">
                 <App />
               </Typography>
             }

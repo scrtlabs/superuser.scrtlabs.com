@@ -130,7 +130,9 @@ export default function MsgEditor({
                 }}
               >
                 <CircularProgress size="1em" />
-                <Typography sx={{ fontSize: "1em" }}>Simulating...</Typography>
+                <Typography component="span" sx={{ fontSize: "1em" }}>
+                  Simulating...
+                </Typography>
               </span>
             ) : (
               errorText
@@ -165,7 +167,7 @@ export default function MsgEditor({
             gap: "1rem",
           }}
         >
-          <Typography component="div" align="left" sx={{ fontSize: "small" }}>
+          <Typography component="span" align="left" sx={{ fontSize: "small" }}>
             <details open>
               <summary style={{ cursor: "pointer" }}>Relevant info</summary>
               {relevantInfo}

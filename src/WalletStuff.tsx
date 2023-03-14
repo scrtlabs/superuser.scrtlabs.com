@@ -279,7 +279,7 @@ function getWalletsButtons(
                 marginRight: "0.5rem",
               }}
             />
-            <Typography>
+            <Typography component="span">
               <strong>{wallet.name}</strong>
             </Typography>
           </div>
