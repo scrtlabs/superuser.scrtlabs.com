@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
 import Button from "@mui/material/Button";
 import React, { useEffect, useState } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
+import { isMobile } from "react-device-detect";
 import { Else, If, Then } from "react-if";
 import { Breakpoint } from "react-socks";
 import { MetaMaskWallet, SecretNetworkClient } from "secretjs";
@@ -337,12 +338,15 @@ async function connectFina(
   url: string,
   chainId: string
 ) {
-  if (!window.keplr) {
+  if (!window.keplr && isMobile) {
     const urlSearchParams = new URLSearchParams();
     urlSearchParams.append("network", chainId);
     urlSearchParams.append("url", window.location.href);
 
     window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
+
+    localStorage.setItem(LOCALSTORAGE_KEY, "Fina");
+    window.dispatchEvent(new Event("storage"));
   } else {
     connectKeplr(setSecretjs, setWalletAddress, url, chainId, "Fina");
   }
@@ -354,11 +358,13 @@ async function connectStarShell(
   url: string,
   chainId: string
 ) {
-  if (!window.keplr) {
+  if (!window.keplr && isMobile) {
     // const urlSearchParams = new URLSearchParams();
     // urlSearchParams.append("network", chainId);
     // urlSearchParams.append("url", window.location.href);
     // window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
+    // localStorage.setItem(LOCALSTORAGE_KEY, "Fina");
+    // window.dispatchEvent(new Event("storage"));
   } else {
     connectKeplr(setSecretjs, setWalletAddress, url, chainId, "StarShell");
   }
@@ -371,26 +377,36 @@ async function connectLeap(
   chainId: string
 ) {
   //@ts-ignore
-  await window.leap.enable(chainId);
-
-  //@ts-ignore
-  const wallet = window.leap.getOfflineSignerOnlyAmino(chainId);
-  const [{ address: walletAddress }] = await wallet.getAccounts();
-
-  const secretjs = new SecretNetworkClient({
-    url,
-    chainId,
-    wallet,
-    walletAddress,
+  if (!window.leap && isMobile) {
+    // const urlSearchParams = new URLSearchParams();
+    // urlSearchParams.append("network", chainId);
+    // urlSearchParams.append("url", window.location.href);
+    // window.open(`fina://wllet/dapps?${urlSearchParams.toString()}`, "_blank");
+    // localStorage.setItem(LOCALSTORAGE_KEY, "Fina");
+    // window.dispatchEvent(new Event("storage"));
+  } else {
     //@ts-ignore
-    encryptionUtils: window.leap.getEnigmaUtils(chainId),
-  });
+    await window.leap.enable(chainId);
 
-  setWalletAddress(walletAddress);
-  setSecretjs(secretjs);
+    //@ts-ignore
+    const wallet = window.leap.getOfflineSignerOnlyAmino(chainId);
+    const [{ address: walletAddress }] = await wallet.getAccounts();
 
-  localStorage.setItem(LOCALSTORAGE_KEY, "Leap");
-  window.dispatchEvent(new Event("storage"));
+    const secretjs = new SecretNetworkClient({
+      url,
+      chainId,
+      wallet,
+      walletAddress,
+      //@ts-ignore
+      encryptionUtils: window.leap.getEnigmaUtils(chainId),
+    });
+
+    setWalletAddress(walletAddress);
+    setSecretjs(secretjs);
+
+    localStorage.setItem(LOCALSTORAGE_KEY, "Leap");
+    window.dispatchEvent(new Event("storage"));
+  }
 }
 
 async function connectMetamask(
@@ -399,32 +415,33 @@ async function connectMetamask(
   url: string,
   chainId: string
 ) {
-  const sleep = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+  // @ts-ignore
+  if (!window.ethereum && isMobile) {
+    window.open(
+      `https://metamask.app.link/dapp/${encodeURIComponent(
+        window.location.href
+      )}`,
+      "_blank"
+    );
+  } else {
+    // @ts-ignore
+    const [ethAddress] = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
 
-  // wait for metamask to inject to window
-  //@ts-ignore
-  while (typeof window.ethereum === "undefined") {
-    await sleep(50);
+    // @ts-ignore
+    const wallet = await MetaMaskWallet.create(window.ethereum, ethAddress);
+
+    const secretjs = new SecretNetworkClient({
+      url,
+      chainId,
+      wallet,
+      walletAddress: wallet.address,
+    });
+
+    setWalletAddress(wallet.address);
+    setSecretjs(secretjs);
   }
-
-  // @ts-ignore
-  const [ethAddress] = await window.ethereum.request({
-    method: "eth_requestAccounts",
-  });
-
-  // @ts-ignore
-  const wallet = await MetaMaskWallet.create(window.ethereum, ethAddress);
-
-  const secretjs = new SecretNetworkClient({
-    url,
-    chainId,
-    wallet,
-    walletAddress: wallet.address,
-  });
-
-  setWalletAddress(wallet.address);
-  setSecretjs(secretjs);
 
   localStorage.setItem(LOCALSTORAGE_KEY, "MetaMask");
   window.dispatchEvent(new Event("storage"));
