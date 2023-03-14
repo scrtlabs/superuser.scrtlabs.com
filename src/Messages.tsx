@@ -882,35 +882,36 @@ async function stakingRelevantInfo(
           <td
             style={{ overflowWrap: "break-word" }}
           >{`${d.balance?.amount}${d.balance?.denom}`}</td>
-          <Tooltip
-            title={`Click to use ${
-              validators[d.delegation?.validator_address!]
-            } in content`}
-            placement="top"
-          >
-            <td
-              style={{ cursor: "pointer", overflowWrap: "anywhere" }}
-              onClick={async () =>
-                setMsgInput(
-                  msgInput.replace(
-                    /secretvaloper1example/,
-                    d.delegation?.validator_address!
-                  )
-                )
-              }
+
+          <td style={{ display: "flex", placeItems: "center", gap: "0.4em" }}>
+            <Tooltip
+              title={`Click to use ${
+                validators[d.delegation?.validator_address!]
+              } in content`}
+              placement="top"
             >
-              <Breakpoint small down>
-                <u>
-                  {d.delegation?.validator_address} (
-                  {validators[d.delegation?.validator_address!]})
-                </u>
-              </Breakpoint>
-              <Breakpoint medium up>
-                {d.delegation?.validator_address} (
-                {validators[d.delegation?.validator_address!]})
-              </Breakpoint>
-            </td>
-          </Tooltip>
+              <img
+                src="/plus.svg"
+                style={{
+                  width: "1em",
+                  cursor: "pointer",
+                  /* , borderRadius: 10 */
+                }}
+                onClick={async () =>
+                  setMsgInput(
+                    msgInput.replace(
+                      /secretvaloper1example/,
+                      d.delegation?.validator_address!
+                    )
+                  )
+                }
+              />
+            </Tooltip>
+            <span style={{ overflowWrap: "anywhere" }}>
+              {d.delegation?.validator_address} (
+              {validators[d.delegation?.validator_address!]})
+            </span>
+          </td>
           <td style={{ overflowWrap: "break-word" }}>
             {pendingRewards[d.delegation?.validator_address!]}
           </td>
@@ -922,8 +923,8 @@ async function stakingRelevantInfo(
       <table>
         <thead>
           <tr>
+            <th>Balance:</th>
             <th>
-              Balance:{" "}
               {`${balance?.amount || 0}${balance?.denom || prefix} (${(() => {
                 const { humanDenom, decimals } = humanizeDenom(denom);
                 return `${balanceFormat(
