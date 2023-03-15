@@ -884,6 +884,10 @@ async function stakingRelevantInfo(
           >{`${d.balance?.amount}${d.balance?.denom}`}</td>
 
           <td style={{ display: "flex", placeItems: "center", gap: "0.4em" }}>
+            <span style={{ overflowWrap: "anywhere" }}>
+              {d.delegation?.validator_address} (
+              {validators[d.delegation?.validator_address!]})
+            </span>
             <Tooltip
               title={`Click to use ${
                 validators[d.delegation?.validator_address!]
@@ -907,10 +911,6 @@ async function stakingRelevantInfo(
                 }
               />
             </Tooltip>
-            <span style={{ overflowWrap: "anywhere" }}>
-              {d.delegation?.validator_address} (
-              {validators[d.delegation?.validator_address!]})
-            </span>
           </td>
           <td style={{ overflowWrap: "break-word" }}>
             {pendingRewards[d.delegation?.validator_address!]}
