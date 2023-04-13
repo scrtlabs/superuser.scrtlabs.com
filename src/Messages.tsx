@@ -39,6 +39,7 @@ import {
   MsgStoreCode,
   MsgSubmitProposal,
   MsgTransfer,
+  MsgTransferParams,
   MsgUndelegate,
   MsgUndelegateParams,
   MsgUnjail,
@@ -523,11 +524,39 @@ export const messages: {
   //   example: (secretjs: SecretNetworkClient,old: MsgSubmitProposalParams): MsgSubmitProposalParams => ({}),
   //   converter: (input: any): SupportedMessage => {},
   // },
-  // MsgTransfer: {
-  //   module: "ibc-transfer",
-  //   example: (secretjs: SecretNetworkClient,old: MsgTransferParams): MsgTransferParams => ({}),
-  //   converter: (input: any): SupportedMessage => {},
-  // },
+  MsgTransfer: {
+    module: "ibc-transfer",
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgTransferParams,
+      prefix: string,
+      denom: string
+    ): MsgTransferParams => {
+      if (old) {
+        old.sender = secretjs.address;
+        return old;
+      } else {
+        return {
+          sender: secretjs.address,
+          receiver: "osmo1example",
+          //@ts-ignore
+          token: `1${denom}`,
+          source_channel: "channel-1",
+          source_port: "transfer",
+          timeout_timestamp: "600",
+          memo: "",
+        };
+      }
+    },
+    converter: (input: any): SupportedMessage => {
+      input.token = coinFromString(input.token);
+      input.timeout_timestamp = String(
+        Math.floor(Date.now() / 1000) + Number(input.timeout_timestamp)
+      );
+      return new MsgTransfer(input);
+    },
+    relevantInfo: bankRelevantInfo,
+  },
   MsgUndelegate: {
     module: "staking",
     example: (
