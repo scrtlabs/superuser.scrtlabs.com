@@ -371,7 +371,9 @@ export const messages: {
     module: "distribution",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgFundCommunityPoolParams
+      old: MsgFundCommunityPoolParams,
+      prefix: string,
+      denom: string
     ): MsgFundCommunityPoolParams => {
       if (old) {
         old.depositor = secretjs.address;
@@ -394,7 +396,9 @@ export const messages: {
     module: "compute",
     example: (
       secretjs: SecretNetworkClient,
-      old: MsgInstantiateContractParams
+      old: MsgInstantiateContractParams,
+      prefix: string,
+      denom: string
     ): MsgInstantiateContractParams => {
       if (old) {
         old.sender = secretjs.address;
@@ -666,12 +670,12 @@ export const messages: {
             {
               //@ts-ignore
               option: "YES/NO/ABSTAIN/NO_WITH_VETO",
-              weight: 0.6,
+              weight: "0.6",
             },
             {
               //@ts-ignore
               option: "YES/NO/ABSTAIN/NO_WITH_VETO",
-              weight: 0.4,
+              weight: "0.4",
             },
           ],
         };

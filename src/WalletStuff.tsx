@@ -314,7 +314,7 @@ async function connectKeplr(
 ) {
   await window.keplr!.enable(chainId);
 
-  const wallet = window.keplr!.getOfflineSignerOnlyAmino(chainId);
+  const wallet = window.keplr!.getOfflineSigner(chainId);
   const [{ address: walletAddress }] = await wallet.getAccounts();
 
   const secretjs = new SecretNetworkClient({
@@ -389,7 +389,7 @@ async function connectLeap(
     await window.leap.enable(chainId);
 
     //@ts-ignore
-    const wallet = window.leap.getOfflineSignerOnlyAmino(chainId);
+    const wallet = window.leap.getOfflineSigner(chainId);
     const [{ address: walletAddress }] = await wallet.getAccounts();
 
     const secretjs = new SecretNetworkClient({

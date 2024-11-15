@@ -24,7 +24,7 @@
     "react-router": "^6.8.2",
     "react-router-dom": "^6.8.2",
     "react-socks": "false2.2.0",
-    "secretjs": "false1.8.1"
+    "secretjs": "false1.15.0-beta.2"
   },
   "devDependencies": {
     "@types/react": "17.0.24",

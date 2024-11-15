@@ -52,6 +52,7 @@ export const explorerTxFromChainId: { [chainId: string]: string } = {
   "onomy-mainnet-1": "https://www.mintscan.io/onomy-protocol/txs",
   "umee-1": "https://www.mintscan.io/umee/txs",
   "secret-4": "https://www.mintscan.io/secret/txs",
+  "pulsar-3": "https://testnet.ping.pub/secret/tx",
   "laozi-mainnet": "https://www.mintscan.io/band/txs",
   "desmos-mainnet": "https://www.mintscan.io/desmos/txs",
 };
