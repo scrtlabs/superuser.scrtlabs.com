@@ -45,6 +45,8 @@ import {
   MsgUnjail,
   MsgUnjailParams,
   MsgVote,
+  MsgMigrateContract,
+  MsgMigrateContractParams,
   MsgVoteParams,
   MsgVoteWeighted,
   MsgVoteWeightedParams,
@@ -85,6 +87,7 @@ export type SupportedMessage =
   | MsgVoteWeighted
   | MsgWithdrawDelegatorReward
   | MsgWithdrawValidatorCommission
+  | MsgMigrateContract<any>
   | MsgSetAutoRestake;
 
 export const messages: {
@@ -367,6 +370,34 @@ export const messages: {
       return new MsgExecuteContract(input);
     },
   },
+  MsgMigrateContract: {
+    module: "compute",
+    example: (
+      secretjs: SecretNetworkClient,
+      old: MsgMigrateContractParams<any>,
+      prefix: string,
+      denom: string
+    ): MsgMigrateContractParams<any> => {
+      if (old) {
+        old.sender = secretjs.address;
+        return old;
+      } else {
+        return {
+          sender: secretjs.address,
+          contract_address: `${prefix}1example`,
+          msg: {
+            "": {},
+          },
+          code_hash: "abcdefg", // optional
+          code_id: 1, 
+        };
+      }
+    },
+    converter: (input: any): SupportedMessage => {
+      return new MsgMigrateContract(input);
+    },
+  },
+
   MsgFundCommunityPool: {
     module: "distribution",
     example: (
