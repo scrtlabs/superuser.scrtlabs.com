@@ -58,6 +58,7 @@ import {
   selfDelegatorAddressToValidatorAddress,
   toBase64,
   VoteOption,
+  MsgSetContractGovernance,
 } from "secretjs";
 
 export type SupportedMessage =
@@ -78,6 +79,7 @@ export type SupportedMessage =
   | MsgRevokeAllowance
   | MsgSend
   | MsgSetWithdrawAddress
+  | MsgSetContractGovernance
   | MsgStoreCode
   | MsgSubmitProposal
   | MsgTransfer
@@ -397,7 +399,28 @@ export const messages: {
       return new MsgMigrateContract(input);
     },
   },
-
+  MsgSetContractGovernance: {
+    module: "compute",
+    example: (
+      secretjs: SecretNetworkClient,
+      old: any,
+      prefix: string,
+      denom: string
+    ): any => {
+      if (old) {
+        old.sender = secretjs.address;
+        return old;
+      } else {
+        return {
+          sender: secretjs.address,
+          contract_address: `${prefix}1example`,
+        };
+      }
+    },
+    converter: (input: any): SupportedMessage => {
+      return new MsgSetContractGovernance(input);
+    },
+  },
   MsgFundCommunityPool: {
     module: "distribution",
     example: (
